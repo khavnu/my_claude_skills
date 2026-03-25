@@ -1,0 +1,46 @@
+{
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "superpowers@superpowers-marketplace": true,
+    "code-review@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      },
+      "autoUpdate": true
+    }
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"Session done. If .kt files changed, run: ./gradlew :app:compileLiteDebugKotlin\"}'",
+            "statusMessage": "Session complete"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r \".tool_input.file_path // empty\" | grep -E \"\\.kt$\" >> ~/.claude/kt-changes.log 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | grep -E '^/home/khapv/\\.claude/(CLAUDE\\.md|skills/)' | while read -r f; do\n  if [[ \"$f\" == *CLAUDE.md ]]; then\n    cp \"$f\" /home/khapv/Claude_Usage/my_claude_skills/CLAUDE.md\n  elif [[ \"$f\" == *skills/* ]]; then\n    rsync -a /home/khapv/.claude/skills/ /home/khapv/Claude_Usage/my_claude_skills/skills/\n  fi\ndone 2>/dev/null || true",
+            "statusMessage": "Syncing backup..."
+          }
+        ]
+      }
+    ]
+  }
+}
