@@ -272,6 +272,8 @@ These rules apply to ALL projects without exception:
 5. **Auto-read images** — When the user sends a file path to an image (e.g. `/home/.../screenshot.png`), always read and analyze it immediately without asking for confirmation.
 6. **Auto-update CLAUDE.md** — When adding instructions or rules to CLAUDE.md, apply them directly without asking for confirmation. User reviews after completion.
 7. **Auto-create files** — When adding new code files or resource files, create them directly without asking for confirmation. User reviews after completion.
+8. **Auto-update skills/memory** — When discovering new patterns, pitfalls, or better approaches, update CLAUDE.md, skills, and memory immediately. Always self-improve during work.
+9. **safeShowDialogFragmentOrNot over raw .show()** — Always use `safeShowDialogFragmentOrNot(dialog, TAG)` instead of `dialog.show(supportFragmentManager, TAG)` when showing a `DialogFragment` from an Activity. If the function doesn't exist in the project, see skill `android-context-extensions` for full implementation.
 
 ---
 
@@ -389,4 +391,37 @@ When using Kotlin Flow:
    - SharedFlow for events
 
 5. If Flow is overkill → suggest suspend alternative
+---
+
+# Periodic Backup Rule
+
+At the **end of each session** (or when the user explicitly asks), backup all Claude configuration files to:
+
+```
+/home/khapv/Claude_Usage/my_claude_skills/
+```
+
+**What to backup:**
+
+| Source | Destination |
+|---|---|
+| `~/.claude/CLAUDE.md` | `my_claude_skills/CLAUDE.md` |
+| `~/.claude/settings.json` | `my_claude_skills/settings.json` |
+| `~/.claude/skills/*` | `my_claude_skills/skills/` |
+| Project memory (`~/.claude/projects/*/memory/*`) | `my_claude_skills/memory/<project-name>/` |
+| Project CLAUDE.md (`<project>/CLAUDE.md`) | `my_claude_skills/project_claude_md/<project-name>/CLAUDE.md` |
+
+**How to backup:**
+
+```bash
+rsync -av --delete ~/.claude/CLAUDE.md /home/khapv/Claude_Usage/my_claude_skills/CLAUDE.md
+rsync -av --delete ~/.claude/settings.json /home/khapv/Claude_Usage/my_claude_skills/settings.json
+rsync -av --delete ~/.claude/skills/ /home/khapv/Claude_Usage/my_claude_skills/skills/
+rsync -av --delete ~/.claude/projects/*/memory/ /home/khapv/Claude_Usage/my_claude_skills/memory/
+```
+
+**Rules:**
+- Use `rsync` with `--delete` to keep backup in sync (remove deleted files)
+- Run automatically without asking for confirmation
+- If backup folder doesn't exist, create it
 ---

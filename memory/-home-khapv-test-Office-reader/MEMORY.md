@@ -1,0 +1,10 @@
+- [Project overview](project_office_reader.md) — Office Reader Android library, JS-based rendering in WebView
+- [DOCX wrap distance bug](bug_docx_wrap_distance.md) — Image float margin not applying, ongoing fix
+- [Legacy-only work rule](feedback_legacy_only.md) — Only touch legacy readers, never modify working modern format code
+- [PptReader technical knowledge](ppt_reader_technical.md) — Escher records, HSLF class hierarchy, Android limitations, coordinate system, CSS rendering
+- [PptReader current status](ppt_reader_status.md) — Những gì đã fix và còn lại, debug logs chưa xóa
+- [No hardcoded fix values](feedback_no_hardcode.md) — Derive values from actual data, don't patch with magic numbers
+- [DocReader scope restriction](feedback_scope_docreader.md) — Only modify DocReader.kt; never touch other working format files
+- [Screenshot location](reference_screenshots.md) — Mobile screenshots at ~/Desktop/screenshots/
+- [Skip git operations](feedback_no_git.md) — User handles all git commits/pushes manually, never attempt them
+- [WordView ToC bitmap capture](toc_doc_bitmap.md) — .doc ToC thumbnail bugs fixed (marker compare, full page, large image), done 2026-04-16

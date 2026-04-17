@@ -1,19 +1,4 @@
 {
-  "enabledPlugins": {
-    "superpowers@claude-plugins-official": true,
-    "superpowers@superpowers-marketplace": true,
-    "code-review@claude-plugins-official": true
-  },
-  "extraKnownMarketplaces": {
-    "superpowers-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "obra/superpowers-marketplace"
-      },
-      "autoUpdate": true
-    }
-  },
-  "skipDangerousModePermissionPrompt": true,
   "hooks": {
     "Stop": [
       {
@@ -36,11 +21,55 @@
           },
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path // empty' | grep -E '^/home/khapv/\\.claude/(CLAUDE\\.md|skills/)' | while read -r f; do\n  if [[ \"$f\" == *CLAUDE.md ]]; then\n    cp \"$f\" /home/khapv/Claude_Usage/my_claude_skills/CLAUDE.md\n  elif [[ \"$f\" == *skills/* ]]; then\n    rsync -a /home/khapv/.claude/skills/ /home/khapv/Claude_Usage/my_claude_skills/skills/\n  fi\ndone 2>/dev/null || true",
+            "command": "jq -r '.tool_input.file_path // empty' | grep -E '^/home/khapv/\\.claude/(CLAUDE\\.md|skills/|settings\\.json|agents/)' | while read -r f; do\n  if [[ \"$f\" == *CLAUDE.md ]]; then\n    cp \"$f\" /home/khapv/Claude_Usage/my_claude_skills/CLAUDE.md\n  elif [[ \"$f\" == *settings.json ]]; then\n    cp \"$f\" /home/khapv/Claude_Usage/my_claude_skills/settings.json\n  elif [[ \"$f\" == *skills/* ]]; then\n    rsync -a /home/khapv/.claude/skills/ /home/khapv/Claude_Usage/my_claude_skills/skills/\n  elif [[ \"$f\" == *agents/* ]]; then\n    rsync -a /home/khapv/.claude/agents/ /home/khapv/Claude_Usage/my_claude_skills/agents/\n  fi\ndone 2>/dev/null || true",
             "statusMessage": "Syncing backup..."
+          },
+          {
+            "type": "command",
+            "command": "FILE=$(jq -r '.tool_input.file_path // empty')\nif echo \"$FILE\" | grep -qE '\\.kt$'; then\n  DIR=$(dirname \"$FILE\")\n  while [[ \"$DIR\" != \"/\" ]]; do\n    if [[ -f \"$DIR/gradlew\" ]]; then\n      OUTPUT=$(cd \"$DIR\" && ./gradlew :app:compileLiteDebugKotlin --quiet 2>&1)\n      EXIT=$?\n      if [[ $EXIT -ne 0 ]]; then\n        echo \"{\\\"systemMessage\\\": \\\"Compile FAILED - fix before continuing:\\\\n$(echo \"$OUTPUT\" | tail -30 | sed 's/\"/\\\\\"/g')\\\"}\"\n        exit 2\n      fi\n      break\n    fi\n    DIR=$(dirname \"$DIR\")\n  done\nfi",
+            "statusMessage": "Compiling Kotlin...",
+            "asyncRewake": true
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if git -C \"$PWD\" rev-parse --is-inside-work-tree &>/dev/null; then\n  BRANCH=$(git branch --show-current)\n  LOG=$(git log --oneline -5 2>/dev/null)\n  STATUS=$(git status --short 2>/dev/null)\n  MSG=\"Git context:\\nBranch: $BRANCH\"\n  [[ -n \"$LOG\" ]] && MSG=\"$MSG\\n\\nRecent commits:\\n$LOG\"\n  [[ -n \"$STATUS\" ]] && MSG=\"$MSG\\n\\nChanged files:\\n$STATUS\"\n  echo \"{\\\"systemMessage\\\": \\\"$(echo \"$MSG\" | sed 's/\"/\\\\\"/g')\\\"}\"\nfi",
+            "statusMessage": "Loading git context..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "CMD=$(jq -r '.tool_input.command // empty')\nif echo \"$CMD\" | grep -qE 'git\\s+(commit|push|reset\\s+--hard|checkout\\s+\\.|restore\\s+\\.|clean\\s+-f|branch\\s+-[Dd])'; then\n  echo \"{\\\"decision\\\": \\\"block\\\", \\\"reason\\\": \\\"Git commit/push/destructive operations are managed by the user. Do not run: $CMD\\\"}\"\n  exit 2\nfi"
           }
         ]
       }
     ]
-  }
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "superpowers@superpowers-marketplace": true,
+    "code-review@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      },
+      "autoUpdate": true
+    }
+  },
+  "skipDangerousModePermissionPrompt": true
 }
