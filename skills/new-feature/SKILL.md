@@ -1,115 +1,116 @@
 ---
 name: new-feature
-description: Scaffold a new Android feature with proper MVVM structure — Activity/Fragment, ViewModel, UiState, Hilt DI wiring.
+description: Scaffold a new Android feature with proper MVVM structure — Composable Route+Screen, ViewModel, UiState, NavKey, Hilt wiring. Uses Compose + Navigation3.
 ---
 
 # New Android Feature Scaffold
 
-You are scaffolding a new Android feature following Clean Architecture + MVVM.
+Follow Clean Architecture + MVVM. Project uses **Jetpack Compose + Navigation3** — no Activity/Fragment for features.
 
-The user will describe what feature they want. Ask for any missing information before generating code:
+Ask for missing info before generating:
 - Feature name
-- Entry point: Activity or Fragment?
-- Does it need a BottomSheet dialog?
-- What data does it need from Repository?
+- NavKey params needed (if any)
+- What data from Repository?
+- Does it need a BottomSheet?
 
 ---
 
-# Files to generate
-
-For a feature named `MyFeature`, create:
+## File Structure
 
 ```
-feature/my_feature/
-├── MyFeatureActivity.kt         # or MyFeatureFragment.kt
-├── MyFeatureViewModel.kt
-└── model/
-    └── MyFeatureUiState.kt
+feature/{name}/
+├── {Name}Screen.kt       # Route + Screen composables
+├── {Name}ViewModel.kt    # ViewModel + ViewModelState (co-located)
+└── {Name}UiState.kt      # UiState data class + UiEvent sealed interface
 ```
 
-And register in:
-- `AndroidManifest.xml` (if Activity)
-- Hilt module if new Repository binding is needed
+NavKey goes in `navigation/NavKey.kt` (no params) or alongside the feature if params needed.
 
 ---
 
-# Templates
+## Templates
 
-## UiState
+### NavKey (`navigation/NavKey.kt`)
+```kotlin
+@Serializable
+data class MyFeature(val id: Long) : NavKey   // with params
 
+@Serializable
+data object MyFeature : NavKey                 // no params
+```
+
+### UiState (`MyFeatureUiState.kt`)
 ```kotlin
 data class MyFeatureUiState(
     val isLoading: Boolean = false,
-    // add fields here
+    // fields here
 )
+
+sealed interface MyFeatureEvent {
+    data object NavigateBack : MyFeatureEvent
+}
 ```
 
-## ViewModel
-
+### ViewModel (`MyFeatureViewModel.kt`)
 ```kotlin
 @HiltViewModel
 class MyFeatureViewModel @Inject constructor(
     private val repository: SomeRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(MyFeatureUiState())
-    val uiState: StateFlow<MyFeatureUiState> = _uiState.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = MyFeatureUiState()
+    private val _state = MutableStateFlow(ViewModelState())
+    val uiState: StateFlow<MyFeatureUiState> = _state
+        .map { it.toUiState() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ViewModelState().toUiState())
+
+    private val _events = Channel<MyFeatureEvent>()
+    val events: Flow<MyFeatureEvent> = _events.receiveAsFlow()
+}
+
+private data class ViewModelState(
+    val isLoading: Boolean = false,
+) {
+    fun toUiState() = MyFeatureUiState(isLoading = isLoading)
+}
+```
+
+### Screen (`MyFeatureScreen.kt`)
+```kotlin
+@Composable
+fun MyFeatureRoute(
+    onBack: () -> Unit,
+    viewModel: MyFeatureViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    MyFeatureScreen(uiState = uiState, onBack = onBack)
+}
+
+@Composable
+fun MyFeatureScreen(
+    uiState: MyFeatureUiState,
+    onBack: () -> Unit,
+) {
+    // pure UI — no ViewModel here
+}
+```
+
+### NavEntry (in `CamScannerNavigation.kt`)
+```kotlin
+is MyFeature -> NavEntry(key) {
+    MyFeatureRoute(
+        onBack = { backStack.removeLast { } },
     )
-}
-```
-
-## Activity
-
-```kotlin
-@AndroidEntryPoint
-class MyFeatureActivity : AppCompatActivity() {
-
-    private lateinit var binding: ActivityMyFeatureBinding
-    private val viewModel: MyFeatureViewModel by viewModels()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityMyFeatureBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        subscribeObservers()
-    }
-
-    private fun subscribeObservers() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { renderState(it) }
-            }
-        }
-    }
-
-    companion object {
-        fun open(context: Context) {
-            context.startActivity(Intent(context, MyFeatureActivity::class.java))
-        }
-    }
-}
-```
-
-## Fragment → Activity BottomSheet communication
-
-Always use `activityViewModels()` — never `setFragmentResult`.
-
-```kotlin
-@AndroidEntryPoint
-class MyBottomSheet : ThemeBottomSheetDialog() {
-    private val viewModel: MyFeatureViewModel by activityViewModels()
 }
 ```
 
 ---
 
-# Rules
+## Rules
 
-- UiState must be a `data class` with default values
-- ViewModel exposes `StateFlow`, never `LiveData`
-- Activity/Fragment only observes state — no business logic
-- If passing data to Activity, use `companion object { fun open(context, id) }` pattern
-- Always run the compile check command defined in project CLAUDE.md after generating (fallback: `./gradlew compileDebugKotlin`)
+- `Route` = hiltViewModel() + navigation lambdas + `remember` UI state (dialogs)
+- `Screen` = pure UI, receives UiState + callbacks only
+- UiState/Event declared at **bottom** of ViewModel file — never above the class
+- `modifier` is always first param in every `@Composable`
+- One-time events → `Channel` + `receiveAsFlow()`, never `SharedFlow`
+- No `!!`, no hardcoded strings, no `Log.d` (use Timber)
+- Compile after generating: `./gradlew :app:compileDebugKotlin`
