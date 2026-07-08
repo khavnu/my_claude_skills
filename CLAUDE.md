@@ -1,427 +1,337 @@
 # CLAUDE.md
 
-## Role
-
-You are an **Expert Android Developer** with more than 10 years of experience.
-
-Your responsibilities:
-
-* Write production-quality Android code
-* Follow modern Android best practices
-* Focus on maintainable, scalable, and testable architecture
-* Avoid hacky or quick-fix solutions
-
-Preferred technologies:
-
-* Language: **Kotlin**
-* UI: **Jetpack Compose**
-* Architecture: **Clean Architecture + MVVM**
-* Async: **Kotlin Coroutines + Flow**
-* Dependency Injection: **Hilt**
-* Media: **Media3 / ExoPlayer**
-* Networking: **Retrofit + OkHttp**
-* Local storage: **Room / DataStore**
+## User Profile
+- **Language**: Respond in Vietnamese. English only for code, technical terms, library names.
+- **Skill level**: Senior Android engineer — skip basics, get to the point.
+- **Decision style**: When asked "bạn thấy sao?" → give assessment + recommendation, then wait. Never implement during evaluation.
+- **Tech stack**: Kotlin, Jetpack Compose, Clean Architecture + MVVM, Coroutines + Flow, Hilt, Room, DataStore, Retrofit, Media3.
 
 ---
 
-# Development Principles
+## Code Quality
 
-When writing code:
+- Constants belong to the class they configure — sentinel values go in that class's `companion object`.
+- Truncation must show `…`: `if (text.length > N) text.take(N - 1) + "…" else text`
+- `modifier` is always the first argument — definitions and call sites, all `@Composable` functions. **New code only.**
+- Comments explain **why**, not what.
+- No `!!` — use `?:` or `?.let`. No wildcard imports. No hardcoded strings.
+- Lifecycle/cleanup methods (`onCleared`, `onDetach`, `onDestroy`, `release`, `close`, `dispose`) → always the last members of any class.
+- No thrown exceptions → return `Result.Failure`. No empty catch blocks.
+- Descriptive names → no `process()`, `data`, `result`, `handle()`
 
-1. Always follow **SOLID principles**
-2. Prefer **immutable state**
-3. Use **single source of truth**
-4. Avoid unnecessary abstraction
-5. Write readable and maintainable code
-6. Separate responsibilities clearly between layers
+### Lambda & Higher-order function naming
 
-Architecture layers should be:
-
-data -> domain -> presentation
-
----
-
-# Communication Rules
-
-If any requirement is **unclear, ambiguous, or incomplete**, you MUST:
-
-1. Ask clarifying questions
-2. Confirm assumptions
-3. Wait for confirmation before implementing complex features
-
-Do NOT guess unclear requirements.
-
-Always prefer clarification over incorrect implementation.
-
----
-
-# Code Quality Rules
-
-All code must follow these standards:
-
-* Use meaningful naming
-* Avoid large classes
-* Avoid large functions (>50 lines if possible)
-* Prefer extension functions when appropriate
-* Use Kotlin idioms
-
-Bad:
-
-val a = list.filter { it.x }.map { it.y }
-
-Better:
-
-val activeUsers = users
-.filter { it.isActive }
-.map { it.name }
-
----
-# Build Verification
-
-Before finalizing any code change, always run:
-
-```
-./gradlew compileDebugKotlin
-```
-
-This only compiles Kotlin sources without packaging — fastest way to catch compile errors.
-If deeper verification is needed (e.g. resource issues, APK generation), run `./gradlew assembleDebug`.
-
----
-# Commenting Rules
-
-Comments must explain **why**, not **what**.
-
-Example:
-
-// BAD
-// increase index
-index++
-
-// GOOD
-// Move to next song in playlist
-currentSongIndex++
-
----
-
-# Android Best Practices
-
-Follow official Android recommendations.
-
-Important patterns:
-
-* ViewModel for UI logic
-* Repository pattern for data
-* StateFlow for UI state
-* Use sealed classes for UI states
-
-Example UI state:
+**Higher-order function params**: không dùng `block` — quá generic. Dùng tên semantic:
+- `(T) -> T` transformation → `transform`
+- `(T) -> Unit` side-effect → `action`
+- `(T) -> Boolean` filter → `predicate`
+- `StateFlow.update {}` helper → `update`
 
 ```kotlin
-sealed class PlayerUiState {
-    object Loading : PlayerUiState()
-    data class Playing(val song: Song) : PlayerUiState()
-    object Paused : PlayerUiState()
+// Sai
+fun updateDraft(block: (DraftState) -> DraftState)
+
+// Đúng
+fun updateDraft(transform: (DraftState) -> DraftState)
+```
+
+**Named `let` lambda params**: luôn đặt tên explicit khi có nested lambda hoặc `it` gây ambiguity — không dùng implicit `it`:
+
+```kotlin
+// Sai — `it` trong let là gì? draft hay state?
+state.draft?.let { state.copy(draft = transform(it)) }
+
+// Đúng
+state.draft?.let { oldDraft ->
+    state.copy(draft = transform(oldDraft))
 }
 ```
 
----
-
-# Performance Guidelines
-
-Avoid:
-
-* blocking main thread
-* unnecessary recompositions in Compose
-* heavy operations in ViewModel init
-
-Prefer:
-
-* Flow
-* lazy loading
-* paging for large lists
+Convention: `old{Type}`, `current{Type}`, hoặc tên domain ngắn (`draft`, `file`, `preset`).
 
 ---
 
-# When Generating Code
+## Build Verification
 
-Always provide:
-
-1. Clean project structure
-2. Production-ready code
-3. Explanation of key parts
-4. Trade-offs when needed
+After any code change, always run `./gradlew :<module>:compileDebugKotlin` (check project CLAUDE.md for flavor). Never ask — just run.
 
 ---
 
-# When Reviewing Code
+## Workflow Rules
 
-When asked to review code:
-
-1. Identify bugs
-2. Suggest improvements
-3. Detect architecture problems
-4. Recommend better patterns
-
-Be critical but constructive.
-
----
-
-# Collaboration Style
-
-When implementing features:
-
-1. Understand requirements
-2. Design architecture
-3. Implement code
-4. Explain reasoning
-
-Always think like a **senior engineer reviewing a pull request**.
+1. **Auto-apply changes** — Write/edit files directly. Never ask "should I apply this?".
+2. **Auto-run builds** — After changes, compile automatically.
+3. **Auto-read images** — When user sends an image path, read and analyze immediately.
+4. **Auto-update CLAUDE.md** — Apply rule changes directly.
+5. **Auto-update skills/memory** — Proactively save new patterns/pitfalls discovered during work.
+6. **NEVER auto-commit or auto-push** — Only run `git commit`/`git push` when user explicitly asks. Subagents must include "DO NOT run git commit or git push" in their prompts.
+7. **Shared ViewModel over FragmentResultListener** — Same-feature BottomSheet/Dialog: use `activityViewModels()`.
+8. **safeShowDialogFragmentOrNot over raw .show()** — Always use `safeShowDialogFragmentOrNot(dialog, TAG)` from an Activity.
+9. **Incremental delivery — step by step, report back** — Cho mọi feature/màn hình mới: chia nhỏ thành các bước rõ ràng, hoàn thành từng bước rồi báo lại user trước khi làm tiếp. Không làm dồn tất cả một lúc. Với màn hình mới: bước 1 = UI shell với fake/empty data, bước 2 = wire data thật.
 
 ---
 
-# Output Style
+## Scope Discipline
 
-Prefer:
+Only fix what was asked. If a related issue is spotted, mention it — do not fix silently.
 
-* Structured answers
-* Clear code blocks
-* Step-by-step explanation when needed
+## Multi-Fix Discipline
 
----
-
-# Solution Response Format
-
-When providing any technical solution or code change, always structure the response as:
-
-1. **Solution** — Clear, practical, production-ready. For non-trivial tasks: explain why this approach was chosen over alternatives.
-2. **Weaknesses** — Trade-offs, assumptions, scalability concerns, and what problems this solution avoids.
-3. **Edge Cases** — Scenarios that could cause crashes, wrong behavior, or silent failures.
+When applying multiple fixes from a review list: after each fix, pause and ask *"Does this fix make any remaining item obsolete?"* Never tick items blindly — fixes interact.
 
 ---
 
-# Project Module Structure
+## Problem-Solving Approach
 
-All Android projects follow multi-module Clean Architecture:
+Top-down before implementing:
+1. **Function** — what does this serve, what does the caller need?
+2. **Pseudo code** — branches, edge cases, interface shape
+3. **Implement** — only then write real code
 
-```
-:app                    # Entry point, DI wiring, navigation
-:domain                 # Entities, repository interfaces, use cases (pure Kotlin)
-:data                   # Repository implementations, network, local storage
-:core:common            # Shared utilities, extensions, base classes
-:core:designsystem      # Shared UI components, theme, typography
-```
-
-When creating new files, always determine the correct module before writing.
+For refactors/extractions: ask *"does this abstraction hide complexity, or just move code?"* If the caller still needs to know all internals → don't extract.
 
 ---
 
-# Feature Package Structure
+## Solution Format
 
-Each feature follows this pattern inside `:app` or a feature module:
+**Non-trivial tasks** (new feature, architecture change, complex bug fix):
+1. **Solution** — approach + why over alternatives.
+2. **Weaknesses** — trade-offs, assumptions.
+3. **Edge Cases** — crashes, wrong behavior, silent failures.
 
-```
-feature/
-└── my_feature/
-    ├── MyFeatureScreen.kt      # Composable UI
-    ├── MyFeatureViewModel.kt   # UI logic + state
-    └── components/             # Sub-composables specific to this feature
-```
+**Trivial tasks**: just make the change.
 
 ---
 
-# Naming Conventions
+## Code Review Format
 
-| Type | Convention | Example |
-|---|---|---|
-| Screen composable | `*Screen.kt` | `WeatherScreen.kt` |
-| ViewModel | `*ViewModel.kt` | `WeatherViewModel.kt` |
-| Repository interface | `*Repository.kt` | `WeatherRepository.kt` |
-| Repository impl | `*RepositoryImpl.kt` | `WeatherRepositoryImpl.kt` |
-| Use case | `*UseCase.kt` | `GetWeatherUseCase.kt` |
-| DTO → Domain mapper | `*Mapper.kt` | `WeatherMapper.kt` |
-| Kotlin extensions | `*Extension.kt` | `ContextExtension.kt` |
+**Strengths** → **Issues** (Critical / High / Medium / Low) → **Summary table**.
+Always include file:line references.
 
----
-
-# Standard Library Choices
-
-Use these libraries consistently across all projects:
-
-* **Logging:** Timber (never use `Log.d/e` directly)
-* **Image loading:** Coil
-* **Charts:** MPAndroidChart
-* **DI:** Hilt with KSP
-* **Async:** Coroutines + Flow (avoid RxJava)
-* **Networking:** Retrofit + OkHttp
-* **Local DB:** Room with KSP
-* **Preferences:** DataStore (avoid SharedPreferences)
-* **Navigation:** Compose Navigation
-* **Lifecycle-aware collection:** `collectAsStateWithLifecycle()`
-
----
-
-# Workflow Rules
-
-These rules apply to ALL projects without exception:
-
-1. **Auto-apply code changes** — Always write/edit files directly. Never ask "should I apply this?" or wait for confirmation. User reviews after completion.
-2. **Auto-run gradle builds** — After code changes, check project CLAUDE.md for the correct build flavor variant, then run `./gradlew :<module>:compile<Flavor>DebugKotlin` automatically. Fall back to `./gradlew compileDebugKotlin` if no flavor is defined. Never ask "should I run the build?".
-3. **Shared ViewModel over FragmentResultListener** — When a BottomSheet/Dialog is an internal UI component of a host Activity (same feature), always use `activityViewModels()` for communication. Never use `setFragmentResult` + `setFragmentResultListener` for same-feature fragments.
-4. **Reuse layout/binding** — When multiple fragments have the same visual structure, share one XML layout and set dynamic content (title, etc.) programmatically. Do not duplicate layouts.
-5. **Auto-read images** — When the user sends a file path to an image (e.g. `/home/.../screenshot.png`), always read and analyze it immediately without asking for confirmation.
-6. **Auto-update CLAUDE.md** — When adding instructions or rules to CLAUDE.md, apply them directly without asking for confirmation. User reviews after completion.
-7. **Auto-create files** — When adding new code files or resource files, create them directly without asking for confirmation. User reviews after completion.
-8. **Auto-update skills/memory** — When discovering new patterns, pitfalls, or better approaches, update CLAUDE.md, skills, and memory immediately. Always self-improve during work.
-9. **safeShowDialogFragmentOrNot over raw .show()** — Always use `safeShowDialogFragmentOrNot(dialog, TAG)` instead of `dialog.show(supportFragmentManager, TAG)` when showing a `DialogFragment` from an Activity. If the function doesn't exist in the project, see skill `android-context-extensions` for full implementation.
-
----
-
-# Project Onboarding Rule
-
-When starting work on any project (new or existing), before writing any code:
-
-1. Read the project `CLAUDE.md` to understand project-specific rules, structure, and constraints
-2. Explore key existing files (ViewModel, Repository, UseCase) to understand current patterns
-3. Follow existing patterns even if not ideal — consistency over perfection
-4. Never introduce a new pattern without confirming with the user first
-
----
-
-# Dependency Management
-
-When adding new dependencies:
-
-1. Always add to `libs.versions.toml` — never hardcode versions in `build.gradle`
-2. Check if the library already exists in the version catalog before adding
-3. Group related libraries under the same version variable (e.g. `compose-bom`)
-4. Prefer KSP over KAPT for annotation processors
-
----
-
-# Reasoning Rules
-
-Apply **only for non-trivial tasks** (new feature, architecture change, complex bug fix).
-Skip for trivial changes (rename, single-line fix, adding a constant).
-
-Before writing any code, you MUST:
-
-1. Analyze the problem deeply
-2. Identify at least 2 possible approaches
-3. Choose the best approach with justification — prefer simplicity over over-engineering
-4. Consider trade-offs (performance, readability, scalability)
-
-Do NOT jump directly into code for non-trivial tasks.
-
----
-
-# Timeline Explanation
-
-When explaining async flows, coroutine lifecycles, event sequences, or multi-step pipelines, use a timeline format to show ordering clearly.
-
-Example:
-
-```
-t=0   User taps Convert
-t=1   ViewModel calls startConvert() → emits ConversionState.Start
-t=2   AudioConverterImpl starts FFmpeg → emits Converting(0%)
-t=3   FFmpeg progress callbacks → emits Converting(10%)...Converting(99%)
-t=4   FFmpeg completes → MediaScanner.scanFile() called
-t=5   MediaScanner callback → emits ConversionState.Success
-t=6   ViewModel calls copyConvertedSongMetadata()
-t=7   UI shows result dialog
-```
-
-Use timeline when:
-- Explaining coroutine/Flow execution order
-- Describing callback chains
-- Debugging race conditions or ordering bugs
-- Explaining lifecycle events (Activity/Fragment/ViewModel)
-
----
-
-# Production Scale Mindset
-
-All code is assumed to run with **millions of users**. Before finalizing any solution:
-
-1. **Thread safety** — Is shared mutable state protected? Can this be accessed concurrently?
-2. **Memory pressure** — Does this hold large objects longer than needed? Any leak risk?
-3. **Concurrency** — What happens if this is called simultaneously from multiple coroutines?
-4. **Race conditions** — Is there a window where state is inconsistent between two operations?
-5. **Failure at scale** — What fails silently when 1% of users hit an edge case?
-
-Apply this mindset to: repository implementations, ViewModel state management, service layer, any singleton or shared resource.
-
----
-
-# Anti-Pattern Detection
-
-You MUST actively detect and avoid:
-
-- Overusing Flow where suspend is enough
-- Unnecessary abstraction layers
-- Business logic inside UI
-- State duplication
-- Incorrect use of mapLatest / collectLatest
-- Memory leaks via scope misuse
-
-If detected → explain and fix automatically.
----
-# Flow & Concurrency Rules
-
-When using Kotlin Flow:
-
-1. Always justify operator choice:
-   - map vs mapLatest
-   - flatMapConcat vs flatMapLatest vs flatMapMerge
-   - collect vs collectLatest
-
-2. Prevent common mistakes:
-   - Avoid nested Flow unless necessary
-   - Avoid collecting inside ViewModel init without lifecycle awareness
-   - Avoid emitting loading multiple times incorrectly
-
-3. Handle:
-   - cancellation
-   - backpressure
-   - error propagation
-
-4. Prefer:
-   - StateFlow for UI state
-   - SharedFlow for events
-
-5. If Flow is overkill → suggest suspend alternative
----
-
-# Periodic Backup Rule
-
-At the **end of each session** (or when the user explicitly asks), backup all Claude configuration files to:
-
-```
-/home/khapv/Claude_Usage/my_claude_skills/
-```
-
-**What to backup:**
-
-| Source | Destination |
+| Severity | Meaning |
 |---|---|
-| `~/.claude/CLAUDE.md` | `my_claude_skills/CLAUDE.md` |
-| `~/.claude/settings.json` | `my_claude_skills/settings.json` |
-| `~/.claude/skills/*` | `my_claude_skills/skills/` |
-| Project memory (`~/.claude/projects/*/memory/*`) | `my_claude_skills/memory/<project-name>/` |
-| Project CLAUDE.md (`<project>/CLAUDE.md`) | `my_claude_skills/project_claude_md/<project-name>/CLAUDE.md` |
+| Critical | Crash, data loss, security |
+| High | Memory leak, OOM, incorrect behavior |
+| Medium | Performance, fragile coupling |
+| Low | Code smell, readability |
 
-**How to backup:**
+---
 
+## Architecture & Structure
+
+**Modules:** `:app` (nav/DI) → `:domain` (pure Kotlin) → `:data` (impl) → `:core:common` / `:core:designsystem`
+
+**Feature package:** `feature/{name}/{Name}Screen.kt`, `{Name}ViewModel.kt`, `components/`
+
+**Feature có tabs — cấu trúc bắt buộc:**
+```
+feature_name/
+├── FeatureScreen.kt          — Route + Screen (slim)
+├── FeatureViewModel.kt       — scan/permission/loading/error relay only
+├── FeatureUiState.kt
+├── components/               — shared UI của feature
+└── tabs/
+    ├── tab_a/
+    │   ├── TabAContent.kt    — self-contained, hiltViewModel() bên trong
+    │   └── TabAViewModel.kt
+    └── tab_b/
+        ├── TabBContent.kt
+        ├── TabBViewModel.kt
+        └── navigation/       — nested NavDisplay nếu tab có sub-navigation
+            ├── BrowserScreen.kt
+            └── BrowserViewModel.kt
+```
+- **Tab tự chứa**: VM riêng, KHÔNG nhận search/filter state từ parent — tab tự handle.
+- **Navigation co-located**: nested nav của tab nào → `tabs/tab_name/navigation/`, không tạo `*navigation/` ngang hàng feature root.
+- **VM single responsibility**: VM cha chỉ orchestrate shared state; shared data → singleton `*State` inject vào nhiều VM.
+- **Plan phải có section Package Structure** trước khi liệt kê implementation steps.
+
+**ViewModel file layout:** ViewModel class first → `UiState` data class → `Event` sealed interface at the bottom. Never declare supporting types above the ViewModel class.
+
+**Naming:** `*Screen`, `*ViewModel`, `*Repository` (interface in domain), `Default*Repository` (impl in data), `*Scanner` (interface in data/mediastore), `MediaStore*Scanner` (impl), `*UseCase`, `*Mapper`, `*Extension`
+
+**Domain modeling:**
+- Pure Kotlin — zero Android imports
+- `kotlinx.datetime.Instant`, không dùng `java.util.Date` / `java.time`
+- No UseCase wrapping single repo call — chỉ tạo UseCase khi multi-repo, business rules, hoặc reused across VMs
+- Domain trả `DomainError`/enum — không có user-facing string (`R.string`, `UiText`); mapping → string sống ở presentation
+- `sealed interface` thay `open class`; tất cả `val`, không `var`
+
+**Thin delegation là anti-pattern** — class chỉ delegate 1-1 không thêm logic → xoá, inject trực tiếp. Chỉ tạo wrapper khi có transformation hoặc business logic thực sự.
+
+**Libraries:** Timber (no `Log.d`), Coil, Hilt+KSP, Room+KSP, DataStore (no SharedPreferences), Compose Navigation, `collectAsStateWithLifecycle()`.
+
+**Dependencies:** Always add to `libs.versions.toml`. Prefer KSP over KAPT.
+
+---
+
+## Onboarding
+
+Before writing code on any project: read project CLAUDE.md → follow existing patterns (consistency over perfection).
+
+---
+
+## Large Data
+
+Default to streaming (SAX/sequential). DOM only if < 5MB or random access required. Ask "Will this OOM at 10× data size?"
+
+---
+
+## Flow & Concurrency
+
+- **Bridge sync callback → Flow**: `channelFlow { syncFn(onProgress = { trySend(it) }) }.flowOn(io)` — never `flow {}` + `emit` from non-suspend lambda.
+- **Multiple raw callbacks** (`onSuccess`/`onError`/`onProgress`) → replace with sealed class.
+- StateFlow for UI state. One-time events → `Channel` + `receiveAsFlow()`, **never SharedFlow**.
+- Justify operator choice: `map` vs `mapLatest`, `flatMapConcat` vs `flatMapLatest`.
+- **Domain interface dùng `fun observeX(): Flow<T>`**, không phải `val x: StateFlow<T>` — ẩn impl detail, dễ test hơn.
+- **Sealed scan state**: thay vì `isLoading + data + error` riêng lẻ, model thành `sealed interface XyzScanState { Scanning, Ready(data), Error }` trong `domain/model/`.
+- **Shared singleton state**: nhiều VM cần cùng một hot state → `MutableStateFlow` trong `@Singleton` + `@ApplicationScope`, không dùng cold Flow (cold Flow = mỗi subscriber trigger một scan mới).
+- **Dispatcher owned by data source, not repository**: data source tự wrap blocking work — `withContext(ioDispatcher)` cho suspend fn, `flowOn(ioDispatcher)` cho Flow. Repository chỉ orchestrate, không biết dispatcher. Never hardcode `Dispatchers.IO` — inject via qualifier để swap `UnconfinedTestDispatcher` trong tests.
+
+---
+
+## ViewModel Pattern
+
+**File layout** (enforce trước khi viết):
+1. ViewModel class — luôn đầu tiên
+2. UiState data class
+3. Event sealed interface
+
+Never declare UiState/Event above the ViewModel class.
+
+**State pattern:**
+- `private data class ViewModelState` → `private val _state = MutableStateFlow(ViewModelState())` → public `val uiState = _state.map { it.toUiState() }.stateIn(WhileSubscribed(5_000))`
+- `toUiState()` = lightweight field mapping only — no filter/sort/search
+- `_state.update {}` for thread-safe mutation, never expose MutableStateFlow
+
+**Rules:**
+- `@HiltViewModel` + `@Inject constructor`
+- Never inject `Context` — delegate Context-dependent work to Repository/data layer
+- Import domain layer only, never data layer
+- Input validation in Repository, not ViewModel
+- Intermediate Flow pipelines → keep as `Flow`, không `stateIn` ở giữa pipeline
+
+---
+
+## Repository Pattern
+
+**Conventions:**
+- Reactive reads → `fun observeX(): Flow<T>` (not suspend)
+- One-shot reads → `suspend fun getX(): T?`
+- Writes that can fail → `suspend fun save(): Result<T>`
+- Fire-and-forget → `suspend fun delete()` (no Result)
+
+**Result & Error:**
+- `Result<T>` = `Success(data)` | `Failure(DomainError)`
+- `OperationError`: `Empty`, `AlreadyExists`, `NotExists`
+- Feature-specific → `sealed class {Feature}Error : DomainError`
+- Never throw → catch at boundary, return `Result.Failure`
+- Input validate first (trim + isEmpty) → `OperationError.Empty`
+
+**Mappers:** co-located với entity — `toDomain()` / `toEntity()` extension functions
+
+---
+
+## Compose Patterns
+
+**Route vs Screen split:**
+- `{Feature}Route` — owns `hiltViewModel()`, navigation callbacks, `remember` UI-only state (dialogs, tooltips)
+- `{Feature}Screen` — pure UI: nhận `UiState` + callbacks, không biết ViewModel
+
+**Rules:**
+- `remember` = UI-only state | ViewModel = business state
+- Modifier order: `size → clip → background → padding → interaction`
+- testTag format: `"{Feature}_{Component}"` cho non-text nodes
+- Reuse shared `LoadingView`, `EmptyView`, `ErrorView` thay vì tự tạo
+
+---
+
+## Test Strategy
+
+Mỗi task phải declare: **test-first** | **test-after** | **no test needed**
+
+```
+Plan → Pseudo code → Test-first (business logic) → Implement → Test-after (UI) → Simplify
+```
+
+Pseudo code bắt buộc trước khi viết test — xác định interface, input/output, edge cases.
+
+**Test-first:** ViewModel, Repository, UseCase
+**Test-after:** Composable, Navigation (implement → test multi-state/interactions)
+**Skip test:** simple delegation, static UI
+
+**Unit test stack:** JUnit4 + MockK + Turbine + `kotlinx-coroutines-test`
+- `MainDispatcherRule(UnconfinedTestDispatcher)` — reuse across all VM tests
+- Turbine: `flow.test { awaitItem(); cancelAndIgnoreRemainingEvents() }`
+- Test names: backtick `` `when X then Y` ``; body: Given / When / Then comments
+- Mock only direct dependencies, one assertion focus per test
+
+**UI test stack:** `createComposeRule()` + MockK relaxed ViewModel
+- `setContent { AppTheme { Screen(uiState, callbacks) } }`
+- `waitForIdle()` sau state changes; `AppTheme {}` wrapper luôn bắt buộc
+
+**Integration test (DB):** `Room.inMemoryDatabaseBuilder()` — never mock DB/DAO; close DB in `@After`
+
+---
+
+## Production Mindset
+
+Before finalizing: thread safety, memory leaks, concurrent access, race conditions, silent failures at scale.
+
+---
+
+## Anti-Patterns
+
+Actively detect and fix: Flow where suspend suffices, business logic in UI, state duplication, scope misuse causing leaks.
+
+---
+
+## Planning Skill Selection
+
+Khi nhận yêu cầu viết plan, tự chọn skill phù hợp — không hỏi lại — và announce rõ lý do:
+
+| Tình huống | Skill | Lý do chọn |
+|---|---|---|
+| Yêu cầu mơ hồ / chưa rõ intent | `superpowers:brainstorming` trước, rồi mới plan | Plan sai scope còn nguy hơn không plan — brainstorm để clarify intent, constraints, edge case trước khi commit vào hướng cụ thể |
+| Feature/bug/refactor rõ ràng, implement 1 lần | `superpowers:writing-plans` | Scope đã xác định → cần breakdown steps, test strategy, package structure; implement ngay sau khi plan được approve |
+| Spec cần track dài hạn, revisit nhiều lần, hoặc user dùng từ "spec / design doc / tài liệu" | `openspec-propose` | Spec là living document — cần versioning, diff giữa các lần thay đổi, và khả năng apply/archive độc lập với implementation |
+
+**Announce format:** *"Using `[skill]` vì [lý do 1 câu]"* — sau đó thực thi luôn.
+
+---
+
+## Design Phase Checklist (trước khi viết plan)
+
+1. **API lạ**: đọc code thực tế, spike 20-30 dòng nếu không chắc constraints.
+2. **Rendering/WebView**: có scroll container, overflow clipping, CSS transform ảnh hưởng đến print/export không?
+3. **UI component mới**: tìm component có sẵn trong codebase trước.
+4. **Async/Cancellation**: design cancel path ngay từ đầu — điều gì xảy ra khi user cancel/background?
+5. **Dialog UX**: dismiss condition phụ thuộc async step nào?
+
+---
+
+## Timeline Format
+
+Dùng timeline khi giải thích async flow, coroutine lifecycle, race condition:
+```
+t=0  User taps → ViewModel.start() → emits Loading
+t=1  Repo fetches → emits Success
+```
+
+---
+
+## Secrets Policy
+
+**Không bao giờ lưu API key, token, secret, password vào memory** — kể cả dưới dạng reference. Nếu cần nhớ token, chỉ ghi "token đã được set" không ghi giá trị thực.
+
+---
+
+## Periodic Backup
+
+Cuối session, backup tự động (không hỏi):
 ```bash
 rsync -av --delete ~/.claude/CLAUDE.md /home/khapv/Claude_Usage/my_claude_skills/CLAUDE.md
 rsync -av --delete ~/.claude/settings.json /home/khapv/Claude_Usage/my_claude_skills/settings.json
 rsync -av --delete ~/.claude/skills/ /home/khapv/Claude_Usage/my_claude_skills/skills/
-rsync -av --delete ~/.claude/projects/*/memory/ /home/khapv/Claude_Usage/my_claude_skills/memory/
+rsync -av --delete --exclude="*token*" --exclude="*secret*" --exclude="*key*" --exclude="*credential*" --exclude="*password*" ~/.claude/projects/*/memory/ /home/khapv/Claude_Usage/my_claude_skills/memory/
 ```
-
-**Rules:**
-- Use `rsync` with `--delete` to keep backup in sync (remove deleted files)
-- Run automatically without asking for confirmation
-- If backup folder doesn't exist, create it
----
