@@ -53,7 +53,12 @@ Convention: `old{Type}`, `current{Type}`, hoặc tên domain ngắn (`draft`, `f
 
 ## Build Verification
 
-After any code change, always run `./gradlew :<module>:compileDebugKotlin` (check project CLAUDE.md for flavor). Never ask — just run.
+After any code change, always run both steps — never ask, just run:
+1. `./gradlew :<module>:compileDebugKotlin` — fast compile check
+2. Run only tests related to changed files — use `--tests` filter, not full suite:
+   - Map changed file → test class (e.g. `FooViewModel.kt` → `--tests "*.FooViewModelTest"`)
+   - If no dedicated test exists for a changed file, skip that file
+   - Example: `./gradlew :app:testDebugUnitTest --tests "com.tmedilab.music.audio.editor.feature.foo.*"`
 
 ---
 
@@ -187,6 +192,7 @@ Default to streaming (SAX/sequential). DOM only if < 5MB or random access requir
 - **Sealed scan state**: thay vì `isLoading + data + error` riêng lẻ, model thành `sealed interface XyzScanState { Scanning, Ready(data), Error }` trong `domain/model/`.
 - **Shared singleton state**: nhiều VM cần cùng một hot state → `MutableStateFlow` trong `@Singleton` + `@ApplicationScope`, không dùng cold Flow (cold Flow = mỗi subscriber trigger một scan mới).
 - **Dispatcher owned by data source, not repository**: data source tự wrap blocking work — `withContext(ioDispatcher)` cho suspend fn, `flowOn(ioDispatcher)` cho Flow. Repository chỉ orchestrate, không biết dispatcher. Never hardcode `Dispatchers.IO` — inject via qualifier để swap `UnconfinedTestDispatcher` trong tests.
+- **`finally` chỉ dùng cho resource cleanup, không flip UI state**: `finally` luôn chạy kể cả khi `CancellationException` được throw — nếu coroutine đang blocked trong native/blocking call (FFmpeg, MediaCodec...), `CancellationException` chỉ propagate SAU KHI blocking call xong (vài giây sau). `finally` chạy muộn sẽ ghi đè state của operation mới. Thay vào đó: set UI state explicit trong từng branch (`Result.Success` / `Result.Failure`); cancel path tự handle trực tiếp trong `cancelXxx()` function.
 
 ---
 
@@ -317,6 +323,12 @@ Dùng timeline khi giải thích async flow, coroutine lifecycle, race condition
 t=0  User taps → ViewModel.start() → emits Loading
 t=1  Repo fetches → emits Success
 ```
+
+---
+
+## Figma Credentials
+
+Figma tokens/accounts được lưu tập trung tại `~/.claude/figma-accounts/` — không lưu vào project memory, không backup lên git. Khi cần dùng Figma MCP, đọc file từ folder này.
 
 ---
 

@@ -158,6 +158,103 @@ Rules that apply to every project:
 - **`modifier` is the first parameter** in every `@Composable`
 - **Color role → `colorScheme.*`**, accent/overlay not tied to a role → raw Color token
 
+### Clickable touch target
+
+Khi một row/card trong Figma có `padding` và cũng tappable (có arrow, ripple, hoặc onClick), modifier order phải là **`clickable` trước `padding`** — padding nằm bên trong vùng cảm ứng:
+
+```kotlin
+// SAI — vùng click chỉ là content, không tính padding
+Row(
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 12.dp)
+        .clickable { onClick() }
+) { ... }
+
+// ĐÚNG — toàn bộ row kể cả padding đều tappable
+Row(
+    modifier = Modifier
+        .fillMaxWidth()
+        .clickable { onClick() }
+        .padding(vertical = 12.dp)
+) { ... }
+```
+
+Áp dụng cho mọi row tappable: list item, setting row, parameter row, menu item.
+
+### Alignment + full-width ripple trong cùng container
+
+Khi các row tappable cần **căn lề chung** với phần tử không tappable (ví dụ: header card và các clickable row bên dưới), **không đặt horizontal padding trên parent** — parent có padding sẽ shrink `fillMaxWidth()` của row con, ripple sẽ không tới cạnh container.
+
+Pattern chuẩn: định nghĩa `contentPadding` một lần ở parent, truyền xuống từng child — child tự apply sau `clickable`:
+
+```kotlin
+@Composable
+fun ParameterCard() {
+    val contentPadding = PaddingValues(horizontal = 15.dp)
+
+    Column(modifier = Modifier.fillMaxWidth()) {  // không có horizontal padding ở đây
+        // Non-clickable header — dùng cùng contentPadding
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(contentPadding)
+                .padding(vertical = 15.dp)
+        ) { Text("Adjust audio parameters") }
+
+        // Clickable row: clickable trước → ripple full width; padding sau → text căn đúng
+        ParameterRow(contentPadding = contentPadding, onClick = { })
+    }
+}
+
+@Composable
+private fun ParameterRow(
+    contentPadding: PaddingValues,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(contentPadding)       // alignment từ parent, sau clickable
+            .padding(vertical = 12.dp)
+    ) { ... }
+}
+```
+
+**LazyColumn items** — áp dụng cùng pattern. `LazyColumn.contentPadding` chỉ xử lý padding đầu/cuối list, không giải quyết alignment của item. Item vẫn phải nhận `contentPadding` riêng:
+
+```kotlin
+val itemPadding = PaddingValues(horizontal = 16.dp)
+
+LazyColumn(modifier = Modifier.fillMaxWidth()) {
+    items(list) { item ->
+        ItemRow(
+            item = item,
+            contentPadding = itemPadding,
+            onClick = { }
+        )
+    }
+}
+
+@Composable
+fun ItemRow(
+    item: Item,
+    contentPadding: PaddingValues,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(contentPadding)
+            .padding(vertical = 12.dp)
+    ) { ... }
+}
+```
+
+**Tóm tắt:** horizontal padding cho alignment → định nghĩa một lần ở parent, apply trên từng child sau `clickable`. Không bao giờ đặt trên parent container.
+
 ---
 
 ## Step 4 — Validate completeness (no extra tool call needed)
@@ -319,6 +416,7 @@ SectionName
 - [ ] No unmapped values slipped through — flagged and confirmed with user
 - [ ] `modifier` first in every `@Composable`
 - [ ] Strings in `strings.xml`
+- [ ] Tappable rows: `clickable` đứng **trước** `padding` trong modifier chain — padding nằm trong vùng cảm ứng
 
 ## Checklist after writing UI code (Step 4)
 
