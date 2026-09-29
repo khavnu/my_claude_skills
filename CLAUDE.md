@@ -14,10 +14,42 @@
 - Truncation must show `…`: `if (text.length > N) text.take(N - 1) + "…" else text`
 - `modifier` is always the first argument — definitions and call sites, all `@Composable` functions. **New code only.**
 - Comments explain **why**, not what.
+- **Comments always in English** — kể cả khi hội thoại bằng tiếng Việt. Áp dụng cho mọi ngôn ngữ và cả XML layout.
 - No `!!` — use `?:` or `?.let`. No wildcard imports. No hardcoded strings.
 - Lifecycle/cleanup methods (`onCleared`, `onDetach`, `onDestroy`, `release`, `close`, `dispose`) → always the last members of any class.
 - No thrown exceptions → return `Result.Failure`. No empty catch blocks.
 - Descriptive names → no `process()`, `data`, `result`, `handle()`
+
+### Code locality & grouping
+
+Áp dụng cho thứ tự trong một function/composable body. KHÔNG override các rule
+thứ tự cố định (ViewModel file layout, lifecycle/cleanup cuối class, effects trước UI).
+
+1. **Nhóm theo vai trò, không theo kiểu component.** Hai block đứng cạnh nhau khi
+   chúng có cùng ý nghĩa với user, không phải khi chúng dùng chung widget.
+   - Đúng: `EditorFileUnavailableSheet` + `NoAudioDetectedSheet` — cùng là "file
+     không dùng được, lối ra duy nhất là back".
+   - Sai: gom mọi `*BottomSheet` — sẽ chèn sheet "hỏi ý" vào giữa hai sheet "chặn đường".
+   - Không để block khác vai trò chen giữa một nhóm (ví dụ `ProgressDialog` nằm giữa
+     hai dead-end sheet).
+   - Một block thuộc hai vai trò → chọn vai trò người đọc cần thấy trước, và comment lý do.
+
+2. **State chỉ một nơi dùng → khai báo ngay trên chỗ dùng.** `var noAudioAcknowledged
+   by remember {}` sát `NoAudioDetectedSheet` đọc liền mạch hơn hoist lên đầu cách 70 dòng.
+
+3. **Từ 2 nơi dùng trở lên → hoist.** Lên đầu function nếu là UI state; vào `UiState`
+   dưới dạng derived property nếu suy ra được từ business state. Hoist đúng chỗ còn
+   mở ra test — điều kiện trong `UiState` thì unit test VM assert được, trong Route
+   thì chỉ UI test mới chạm tới.
+
+4. **Thứ tự để ĐỌC nằm ở layout; thứ tự BẮT BUỘC phải nằm trong data.** Layout không
+   có gì bảo vệ — không compiler, không test, không lint. Ai đó kéo block đi chỗ khác
+   vì thấy đọc hợp hơn là luật im lặng biến mất.
+   - Sai: `if (hasAudio == false && !isSourceGone)` — sắp lại block là hỏng.
+   - Đúng: `val hasNoAudibleAudio get() = hasAudio == false && !isSourceUnavailable`
+     trong `UiState` — Route sắp kiểu gì cũng không dựng được 2 sheet chồng nhau.
+   - Phép thử: "đổi chỗ hai block này thì hành vi có đổi không?" Có → luật đang nằm
+     sai chỗ, đẩy vào data trước khi sắp lại.
 
 ### Lambda & Higher-order function naming
 
@@ -33,6 +65,19 @@ fun updateDraft(block: (DraftState) -> DraftState)
 
 // Đúng
 fun updateDraft(transform: (DraftState) -> DraftState)
+```
+
+**Param lambda phải ở CUỐI, và giữ nguyên ở cuối khi thêm param mới**: Kotlin bind trailing
+lambda vào param cuối cùng. Thêm param mới SAU một param lambda → mọi call site dùng trailing
+lambda sẽ bind nhầm lambda đó sang param mới (lỗi compile khó đọc, hoặc tệ hơn là vẫn compile).
+Param mới luôn chèn TRƯỚC param lambda.
+
+```kotlin
+// Sai — call site `separate(a, b) { p -> ... }` giờ bind lambda vào cache
+fun separate(a: A, b: B, onProgress: (Float) -> Unit = {}, cache: Cache? = null)
+
+// Đúng
+fun separate(a: A, b: B, cache: Cache? = null, onProgress: (Float) -> Unit = {})
 ```
 
 **Named `let` lambda params**: luôn đặt tên explicit khi có nested lambda hoặc `it` gây ambiguity — không dùng implicit `it`:
@@ -53,12 +98,23 @@ Convention: `old{Type}`, `current{Type}`, hoặc tên domain ngắn (`draft`, `f
 
 ## Build Verification
 
+**Nguyên tắc (mọi project, mọi ngôn ngữ): "build" luôn bao gồm build code TEST.**
+Compile production code mà không compile test = chưa verify. Test code cũng là code, cũng gọi API
+vừa đổi, và nó gãy trước tiên.
+
 After any code change, always run both steps — never ask, just run:
-1. `./gradlew :<module>:compileDebugKotlin` — fast compile check
+1. **Compile TẤT CẢ source set của module đã đổi**, không chỉ main:
+   `./gradlew :<module>:compileDebugKotlin :<module>:compileDebugUnitTestKotlin :<module>:compileDebugAndroidTestKotlin`
+   (project không phải Android/Gradle → dùng lệnh tương đương bao cả test target, ví dụ
+   `cargo check --all-targets`, `tsc -p tsconfig.test.json`, `go vet ./...`)
 2. Run only tests related to changed files — use `--tests` filter, not full suite:
    - Map changed file → test class (e.g. `FooViewModel.kt` → `--tests "*.FooViewModelTest"`)
    - If no dedicated test exists for a changed file, skip that file
    - Example: `./gradlew :app:testDebugUnitTest --tests "com.tmedilab.music.audio.editor.feature.foo.*"`
+
+Lý do rule này tồn tại: `compileDebugKotlin` KHÔNG build test. Đã có lần thêm 1 param vào 1 hàm →
+main xanh, unit test xanh, `androidTest` gãy và lọt nhiều ngày mới lộ ra lúc chạy device test.
+Chạy đủ source set tốn thêm vài giây, bỏ qua thì mất vài ngày.
 
 ---
 
@@ -73,6 +129,14 @@ After any code change, always run both steps — never ask, just run:
 7. **Shared ViewModel over FragmentResultListener** — Same-feature BottomSheet/Dialog: use `activityViewModels()`.
 8. **safeShowDialogFragmentOrNot over raw .show()** — Always use `safeShowDialogFragmentOrNot(dialog, TAG)` from an Activity.
 9. **Incremental delivery — step by step, report back** — Cho mọi feature/màn hình mới: chia nhỏ thành các bước rõ ràng, hoàn thành từng bước rồi báo lại user trước khi làm tiếp. Không làm dồn tất cả một lúc. Với màn hình mới: bước 1 = UI shell với fake/empty data, bước 2 = wire data thật.
+   - **Ngoại lệ — feature lớn/dài** (nhiều session, xử lí nặng, có yêu cầu hiệu suất/RAM/thời gian): dùng skill `long-feature` — checklist cơ bản + nâng cao lưu trong repo, user duyệt checklist xong thì Claude **tự chủ** thực hiện và tự verify, chỉ dừng ở các checkpoint của skill. Claude tự đề xuất khi thấy dấu hiệu, hoặc user yêu cầu.
+10. **Ask immediately when uncertain** — Nghi ngờ về 1 chi tiết (design/layout/behavior/số liệu) mà không tự verify được (không render được UI, dữ liệu nguồn mơ hồ/thiếu, nhiều cách hiểu khả dĩ) → dừng lại hỏi ngay, không đoán rồi tiến hành code. Coi sự không chắc chắn là tín hiệu dừng, không chỉ khi yêu cầu thực sự mơ hồ.
+11. **Retro cuối mỗi ticket** — Xong một ticket, tự hỏi đúng một câu: *"có gì hôm nay tốn thời gian mà session sau sẽ tốn lại y hệt không?"* Có thì ghi memory, không thì thôi. Tiêu chí là **tốn thời gian**, không phải **thú vị**.
+
+    Kỷ luật khi ghi (quan trọng hơn việc ghi nhiều):
+    - **Chỉ ghi cái đã verify, kèm cách verify** — trỏ thẳng `file:line` hoặc lệnh đã chạy, để lần sau kiểm lại trong 10 giây thay vì phải tin.
+    - **Không nhân bản cái repo đã ghi** — code structure, git history, `.claude/rules/*` thì đọc thẳng nguồn.
+    - **Sửa và xoá khi phát hiện sai** — memory sai sống dai y như memory đúng, và nó đến dưới dạng *context* nên đứng TRÊN phán đoán tươi. Thấy memory mâu thuẫn với rule/code hiện tại → sửa ngay, ghi rõ ngày và sửa từ cái gì. Đây là phần "học" thật và là phần luôn bị bỏ qua.
 
 ---
 

@@ -1,10 +1,23 @@
-- [Project overview](project_office_reader.md) — Office Reader Android library, JS-based rendering in WebView
-- [DOCX wrap distance bug](bug_docx_wrap_distance.md) — Image float margin not applying, ongoing fix
-- [Legacy-only work rule](feedback_legacy_only.md) — Only touch legacy readers, never modify working modern format code
-- [PptReader technical knowledge](ppt_reader_technical.md) — Escher records, HSLF class hierarchy, Android limitations, coordinate system, CSS rendering
-- [PptReader current status](ppt_reader_status.md) — Những gì đã fix và còn lại, debug logs chưa xóa
-- [No hardcoded fix values](feedback_no_hardcode.md) — Derive values from actual data, don't patch with magic numbers
-- [DocReader scope restriction](feedback_scope_docreader.md) — Only modify DocReader.kt; never touch other working format files
-- [Screenshot location](reference_screenshots.md) — Mobile screenshots at ~/Desktop/screenshots/
-- [Skip git operations](feedback_no_git.md) — User handles all git commits/pushes manually, never attempt them
-- [WordView ToC bitmap capture](toc_doc_bitmap.md) — .doc ToC thumbnail bugs fixed (marker compare, full page, large image), done 2026-04-16
+- [Stem Splitter decisions](project_stem_splitter_decisions.md) — Spleeter+TFLite, offline-first, Demucs loại vì license; full doc ở docs/stem-splitter-brainstorm.md
+- [User collaboration & ownership](user_collaboration_ownership.md) — user tự nghi ngờ skill khi giao hết việc gõ code cho Claude; ground lại bằng bằng chứng cụ thể, không flattery
+- [Streaming Phase 2 shipped](project_streaming_phase2_shipped.md) — đã ship + hardening batch xong 2026-08-27 (leak/cancel fixes F1-F3/G1-G2/H2 + 2 live bug device-found); đừng đề xuất lại "build streaming"; khi sửa StemSeparator luôn check ripple sang StreamStemSplitEngine
+- [Karaoke idea explored](project_karaoke_idea_explored.md) — 2026-09-03, KHÔNG build; ASR loại vì thanh điệu tiếng Việt bị melody ghi đè, ưu tiên tap-to-sync rồi alignment
+- [Stream chunk 15s](project_stream_chunk_10s.md) — segment chốt 15s (28s→10s→15s); đo khi ĐANG PHÁT thì 10s chỉ còn 1.04x realtime + spinner nháy, 15s sạch; segment length là quyết định độ sâu buffer chứ không phải throughput
+- [R8 consumer rules](project_r8_consumer_rules.md) — AAR ONNX Runtime không keep JNI class → R8 gây SIGABRT; đã vá bằng consumer-rules.pro trong library; build R8 xanh không chứng minh gì, Timber không plant ở release
+- [Playback tests](project_playback_tests.md) — :playback 0→56 test (Robolectric + ExoPlayer thật); lái playhead bằng seekTo đừng chờ phát tới; mutation bắt 7 test của chính mình không assert gì
+- [Playback test flakiness](project_playback_test_flakiness.md) — :playback flaky SẴN (baseline 1/5), gỡ test mới ra đo baseline trước khi đổ lỗi; idleUntil phải là wall-clock
+- [Python edit traps](project_python_edit_traps.md) — bẫy substring companion lồng nhau (dính 3 lần) và numpy cộng int16 tràn im lặng khi verify audio
+- [Chunk join seek bug](project_chunk_join_seek_bug.md) — PTS sau MediaExtractor.seekTo là số bịa, segment lệch tới 260ms; đã thay bằng SourcePcmCache decode tuần tự, đừng quay lại decode từng segment
+- [Lib going to product](project_lib_going_to_product.md) — memory khoá theo project; kiến thức về lib phải vào docs của lib, không vào memory
+- [Fade + merge model + export](project_fade_merge_export.md) — fade từng stem bake vào WAV, gộp về MỘT operation merge (N=1 = lưu 1 stem, đừng thêm API riêng), export ra Music/AudioSeparation; verify audio phải kèm dòng đối chứng; uiautomator dump FAIL khi UI animate và trả file cũ — nghi phép đo trước khi nghi code
+- [Fill preemption bug](project_fill_preemption_bug.md) — requestSegment preempt cả khi đích đã Ready → fill livelock khi đang phát; fix 1 điều kiện, 211.7s→114.2s; chính nó làm 15s trông kém
+- [Test coverage audit](project_test_coverage_audit.md) — audit theo class-được-tham-chiếu (không phải tên file); :presence:yamnet 0→8, repository :app 0→12; defect mergeStems chưa sửa
+- [Checkpoint convention](project_checkpoint_convention.md) — source-only ~4MB, phải kèm gradle gốc; rsync: exclude phải đứng TRƯỚC include='*/' nếu không nuốt cả tensorflow_src và build/, và `*.properties` kéo theo keystore.properties
+- [AS terminal & tiếng Việt](project_as_terminal_vietnamese.md) — hoãn tới sau khi upgrade AS mới thử; plugin classic-ui KHÔNG đổi terminal engine, engine Classic vẫn còn
+- [Prior removals](project_prior_removals.md) — GPU/ONNX/NNAPI đã bị loại và ghi lý do; grep repo trước khi đề xuất "ý tưởng chưa thử"; đừng cắt cửa sổ hẹp khi đọc comment
+- [Model rework 2026-09](project_model_rework_2026-09.md) — cả 6 tier: average-mask + bỏ 1 output (suy bằng phép trừ) + chunk 524.288; quantize=float16; dùng ALL_STEM_KEYS không dùng OUTPUT_TENSORS
+- [adb lái SAF picker](project_adb_saf_picker.md) — picker LÁI ĐƯỢC (comment BundledTrack nói ngược là sai); tap node clickable bao ngoài, List view, root Downloads
+- [Lyrics recognition](project_lyrics_recognition.md) — spike 2026-09-29: phải tách vocal; best Pixel 9 = small+greedy+VAD 1 luồng 81.7s/205s; turbo, YAMNet-VAD, -ac đều đã loại có số đo
+- [A/B trên máy & dòng đối chứng](project_device_ab_control_line.md) — so 2 build phải cùng phiên; `invoke` là đối chứng vì DSP không đụng tới nó; lệch >5% thì vứt phép đo
+- [Tiny model thread overhead](project_tiny_model_thread_overhead.md) — Silero VAD trên Pixel 9: 4 luồng 82s, 1 luồng 0.74s; desktop không lộ; đo riêng từng stage với 1 luồng trước khi đòi thay
+- [Figma page listing](reference_figma_page_listing.md) — get_metadata không nodeId chỉ trả page đầu; dùng use_figma figma.root.children để thấy đủ page (file Karaoke Player có 6)

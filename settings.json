@@ -1,5 +1,5 @@
 {
-  "model": "claude-opus-4-8[1m]",
+  "model": "opus[1m]",
   "hooks": {
     "Stop": [
       {
@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "CMD=$(jq -r '.tool_input.command // empty')\nif echo \"$CMD\" | grep -qE 'git\\s+(commit|push|reset\\s+--hard|checkout\\s+\\.|restore\\s+\\.|clean\\s+-f|branch\\s+-[Dd])'; then\n  echo \"{\\\"decision\\\": \\\"block\\\", \\\"reason\\\": \\\"Git commit/push/destructive operations are managed by the user. Do not run: $CMD\\\"}\"\n  exit 2\nfi"
+            "command": "CMD=$(jq -r '.tool_input.command // empty')\nREPO_ROOT=$(git -C \"$PWD\" rev-parse --show-toplevel 2>/dev/null)\nif echo \"$CMD\" | grep -qE 'git\\s+(push|reset\\s+--hard|checkout\\s+\\.|restore\\s+\\.|clean\\s+-f|branch\\s+-[Dd])'; then\n  echo \"{\\\"decision\\\": \\\"block\\\", \\\"reason\\\": \\\"Git push/destructive operations are managed by the user. Do not run: $CMD\\\"}\"\n  exit 2\nfi\nif echo \"$CMD\" | grep -qE 'git\\s+commit' && [[ \"$REPO_ROOT\" != \"/home/khapv/Work/music_player/green_ba_music_player\" ]]; then\n  echo \"{\\\"decision\\\": \\\"block\\\", \\\"reason\\\": \\\"Git commit is managed by the user outside this project. Do not run: $CMD\\\"}\"\n  exit 2\nfi"
           }
         ]
       }
@@ -73,7 +73,9 @@
       "autoUpdate": true
     }
   },
+  "effortLevel": "xhigh",
   "tui": "default",
   "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
   "remoteControlAtStartup": false
 }

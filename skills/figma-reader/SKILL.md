@@ -3,7 +3,7 @@ name: figma-reader
 description: Use when given a Figma URL or node to implement as Android/Compose UI — before writing any UI code, to avoid hardcoded colors, wrong typography tokens, or duplicating existing composables.
 metadata:
   author: khapv
-  version: "2.3"
+  version: "2.5"
 ---
 
 # Figma Reader — Design Token Mapper
@@ -145,6 +145,25 @@ The user may know about components the search missed. Always ask before deciding
 | Create new | Co-locate in nearest `components/` folder |
 
 **Never skip the report step, even if you found no candidates** — "no match found" is itself useful signal.
+
+---
+
+## Step 2.7 — Full-node property audit (MANDATORY — không audit bằng mắt)
+
+Đối chiếu bằng **số liệu**, cho **mọi node trong scope** — kể cả khi user chỉ yêu cầu 1 thuộc tính, phải check đủ các thuộc tính của node đó:
+
+| Thuộc tính | Nguồn sự thật | Lỗi thực tế đã xảy ra (v2.3) |
+|---|---|---|
+| Vị trí & khoảng cách | `get_metadata` x/y/width — **tính** gap = x₂ − (x₁+w₁) | divider đặt 20dp, đúng là 45dp; ITEM_GAP 16 thay vì 30 |
+| Shape / corner | className `rounded-*` từng góc | badge giữ góc vuông bottom-left của code cũ |
+| Fill: solid vs GRADIENT | `bg-gradient-*` / `backgroundImage` trong className/style | sheet bg làm solid trong khi design là gradient |
+| Màu icon | **TẢI SVG về** (wget — máy không có curl) rồi grep `fill=`/`stroke=` — cấm đoán từ screenshot | đoán icon xám từ screenshot; thực tế `#E8EAEF` và `#4E757A` |
+| Tint kế thừa | `Icon` không set tint → LocalContentColor fallback ≠ design | Close X trong sheet không tint |
+
+Rules:
+- Mọi giá trị xấp xỉ ("gom về token có sẵn") phải **liệt kê tường minh** để user duyệt — không tự gom im lặng (gradient sheet bg đã bị gom sai).
+- Trước khi báo done: chạy lại checklist leaf-node (Step 4) — kể cả cho iteration nhỏ.
+- **Nghi ngờ → hỏi ngay, không đoán.** Không tự render được Compose UI để verify bằng mắt → đây LÀ tín hiệu dừng, không phải lý do để chọn phương án nhiều khả năng đúng nhất rồi tiến hành. Xin screenshot thực tế hoặc số liệu cụ thể trước khi sửa tiếp, thay vì sửa một vòng nữa dựa trên suy luận.
 
 ---
 
