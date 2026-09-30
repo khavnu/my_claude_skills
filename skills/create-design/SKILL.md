@@ -1,0 +1,68 @@
+---
+name: create-design
+description: Use when designing, building, restyling, reviewing or handing off UI — app screens, mockups, design systems, components or Figma files — and before calling any design done, ready, or passing it to developers.
+---
+
+# Create Design
+
+## Overview
+Design quality is decided by measurement on the **rendered** screen, not by
+intent. Agents know the principles; what they skip is checking them — they
+confirm the screen list is complete, then ship white text on neon buttons, a
+focal point nobody sees, five competing accents. This skill makes the checks
+part of the output.
+
+## Workflow
+1. **Brief:** each screen's purpose, user, *conditions of use* (distance, one
+   hand, dark room, glance vs. read), platform, version scope. Ask when unsure.
+2. **Foundations** as tokens: tonal primitives → semantic roles (one meaning each,
+   with pairs, guaranteed contrast and "never" rules in every description), type
+   scale, spacing and radius scales. See `principles.md` §6b.
+3. **Components** with every state (default, pressed, disabled, selected, error,
+   focus; every state of a toggle/cycle).
+4. **Screens** from components, named `<page>.<group>.<n>`, grouped by feature.
+5. **Render, run the Review Gate** on every changed screen, fix, re-render.
+
+Load when needed: `references/principles.md` (hierarchy, color, type, layout,
+UX laws, motion) · `references/specs.md` (standard sizes) ·
+`references/figma-workflow.md` (Figma MCP structure + API traps) ·
+`scripts/tonal_palette.py` (tone ramps from brand seeds).
+
+## Review Gate — REQUIRED in every done / hand-off / progress report
+One table per screen. Each row: a **measured value + how it was measured**.
+"Looks fine" is not a value.
+
+| # | Check | Pass rule | Measured |
+|---|---|---|---|
+| 1 | Contrast of every text/icon pair on its *real* backdrop (glow, image, gradient end) | WCAG ≥4.5 text, ≥3 large/icon **and** APCA \|Lc\| ≥60 content, ≥75 body — `python3 scripts/contrast.py FG BG` | |
+| 2 | Focal point | Blur test: most salient element = the reason the screen exists — `python3 scripts/blur_test.py out.png screen.png` | |
+| 3 | Accent budget | 1 primary accent (gradient/glow/brand fill), ≤1 secondary | |
+| 4 | Proportion | Main content ≥~62% height when it is the point; primary control ≈1.5× secondary | |
+| 5 | Consistency & tokens | Every color bound to a semantic role (no raw hex, no primitive); each role used only with its pair; on-scale sizes; same-row controls share height+radius; nested radius = outer − padding | |
+| 6 | States | Empty, loading, error, permission/offline, long text, each toggle state | |
+| 7 | Conditions of use | The brief's condition checked numerically (legible at distance, thumb reach…) | |
+
+**A failing row blocks "done".** Fix it, or report it as an open blocker with its
+number. Never downgrade a measured fail to "acceptable" yourself — the user decides.
+**An unmeasured row is a FAIL**, not a deferral: measure it now from what you
+have (pixels in the screenshot, dp at 160 dpi, visual angle = size ÷ distance),
+or state exactly which input is missing.
+
+## Quick reference
+- De-emphasize the rest instead of enlarging the hero. One primary action per screen.
+- Saturated mid-tone fill: white text fails WCAG, dark text fails APCA → **darken
+  the fill** (e.g. #B14DFF→#9A3BE8: WCAG 5.0, APCA 79), don't swap text color.
+- Dark mode: dark-grey base, desaturated tone ~80 for text/icons, neon only on large fills.
+- A hue on a same-hue backdrop vanishes (pink wipe on pink glow).
+- Tabular figures for changing numbers; Vietnamese display line-height ≥1.3.
+- Golden ratio checks big splits; it is not a formula.
+- Design with realistic content before judging: real-looking images in varied
+  colors, long names, missing images. Placeholders hide color competition.
+
+## Common mistakes
+| Mistake | Fix |
+|---|---|
+| Contrast checked against the token, not the glow/image under the text | Sample the rendered pixel |
+| Sampling the dimmed line instead of the one that matters | Measure the focal element first |
+| Gate run on one screen, twelve shipped | Every changed screen |
+| Known fail shipped as a footnote | It is a blocker until the user accepts it |

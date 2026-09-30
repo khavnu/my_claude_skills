@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e3b246ca-7bf8-422f-be96-0174aa57b767
-  modified: 2026-09-29T10:11:46.087Z
+  modified: 2026-09-29T10:52:07.199Z
 ---
 
 Traps hit on 2026-09-29 building components in Figma file my_idea (see [[project-karaoke-app-design]]):
@@ -16,6 +16,10 @@ Traps hit on 2026-09-29 building components in Figma file my_idea (see [[project
 4. **INSTANCE_SWAP property + `componentPropertyReferences={mainComponent}` resets every variant's nested instance to the property default** (and drops fill overrides) — re-apply per-variant swaps/fills afterwards.
 6. **Paint opacity is dropped if added after binding** (`{...boundPaint, opacity}` → opacity 1). Put `opacity` in the base paint passed to `setBoundVariableForPaint`, or use node `opacity`.
 7. **Layers inside an instance can't be resized or moved** (`x`/`resize` throw or are ignored) → a slider value can't be an instance override; model it as a variant axis (StemSlider `Level=0/15/30/50/75/100`). Swapping variant via `setProperties` resets TEXT/INSTANCE_SWAP overrides — re-set them after; `clone()`d variants lose `componentPropertyReferences` — relink.
+8. **Icons in this file are TEXT nodes** (Material Symbols ligature, layer name `glyph`) → `findOne(n => n.type==='TEXT')` hits the icon first and overwrites it. Always exclude `name==='glyph'` or target by layer name.
+9. **`setEffectStyleIdAsync('')` detaches but keeps the raw effect** — also set `effects = []` to actually remove glow.
+10. **Property-linked text inside an instance ignores `characters =`** (silently) — change it via `instance.setProperties({[key]: value})`.
+11. **Widening a sibling inside a slider shrinks the auto-layout track** → fixed-width fill rects overflow at 100%; recompute fills from `track.width` after any width change.
 5. **Karaoke wipe via hard-stop text gradient only works on single-line text** — gradient spans the whole box, so wrapped lines all cut at the same x.
 
 **Why:** each cost a failed call + screenshot round-trip.

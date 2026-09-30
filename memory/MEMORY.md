@@ -21,3 +21,4 @@
 - [A/B trên máy & dòng đối chứng](project_device_ab_control_line.md) — so 2 build phải cùng phiên; `invoke` là đối chứng vì DSP không đụng tới nó; lệch >5% thì vứt phép đo
 - [Tiny model thread overhead](project_tiny_model_thread_overhead.md) — Silero VAD trên Pixel 9: 4 luồng 82s, 1 luồng 0.74s; desktop không lộ; đo riêng từng stage với 1 luồng trước khi đòi thay
 - [Figma page listing](reference_figma_page_listing.md) — get_metadata không nodeId chỉ trả page đầu; dùng use_figma figma.root.children để thấy đủ page (file Karaoke Player có 6)
+- [Whisper JNI device traps](project_whisper_jni_device_traps.md) — số CLI không chuyển sang app (2 luồng), -mc 0=n_max_text_ctx, encoder không huỷ được, test APK targetSdk→cpuset, connectedAndroidTest xoá fixture

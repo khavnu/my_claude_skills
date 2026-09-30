@@ -3,7 +3,7 @@ name: figma-reader
 description: Use when given a Figma URL or node to implement as Android/Compose UI — before writing any UI code, to avoid hardcoded colors, wrong typography tokens, or duplicating existing composables.
 metadata:
   author: khapv
-  version: "2.5"
+  version: "2.7"
 ---
 
 # Figma Reader — Design Token Mapper
@@ -38,6 +38,48 @@ Figma token name  →  Color.kt constant name  (for accents/overlays)
 ```
 Figma style name  →  MaterialTheme.typography.<key>
 ```
+
+---
+
+## Step 1.5 — Discover the Figma file (pages & tokens)
+
+Load skill `figma:figma-use` trước khi gọi `use_figma`.
+
+**Độ sâu đọc theo yêu cầu. Không tự hạ cấp:**
+
+| User yêu cầu | Phải đọc |
+|---|---|
+| Một node / một màn cụ thể | Node đó đến tận leaf (Step 2) |
+| "Đọc toàn bộ", "đọc tất cả node", "đọc cả file" | **Mọi page → mọi frame → tận leaf node**: text, fill kèm bound variable, stroke, radius, auto-layout, size, component instance kèm variant. Tree cắt ở depth 1–2, screenshot tổng hoặc danh sách tên frame **không được tính là đã đọc** |
+| Chỉ hỏi file có gì (tổng quan) | Cấu trúc page, section, frame và tokens |
+
+Khi được yêu cầu đọc toàn bộ:
+- **Cấm dừng ở tổng quan rồi đề xuất "để lúc implement mới đọc chi tiết".** Làm vậy là tự thu hẹp scope user đã giao. Đã xảy ra: đọc cấu trúc và tokens xong thì báo xong, trong khi khoảng 88 màn chưa được đọc tới leaf.
+- Chia việc để không ngập context: mỗi page (hoặc mỗi section với page lớn) là một call `use_figma` duyệt toàn cây, trả dữ liệu gọn, và chia chunk dưới 20kb. Nếu quá nhiều thì fan-out subagent theo section. Mỗi subagent ghi kết quả ra file spec trong repo (ví dụ `docs/design/<section>.md`) để session sau dùng lại, không phải đọc lại Figma.
+- **Báo coverage bằng số:** "đã đọc X/Y frame, Z leaf node". Frame nào lỗi hoặc bị truncate thì liệt kê ra, không được gộp vào "đã đọc".
+
+**Liệt kê page → dùng Plugin API, KHÔNG dùng `get_metadata`.** `get_metadata` không truyền `nodeId` chỉ trả về **page đầu tiên**. Đã có lần kết luận "file chỉ có 1 page" rồi đi xin link user, trong khi file có 6 page.
+
+```js
+// use_figma — read-only
+return figma.root.children.map(p => ({ id: p.id, name: p.name, children: p.children.length }));
+```
+
+Sau đó đọc **mỗi page một call `use_figma`, tất cả phát song song trong cùng một message**, mỗi call `await figma.setCurrentPageAsync(page)` đúng một lần.
+
+**Tokens → đọc từ Variables/Styles API, không đọc text trên canvas:**
+
+| Cần | API |
+|---|---|
+| Color / Dimension / Palette | `figma.variables.getLocalVariableCollectionsAsync()` + `getLocalVariablesAsync()`. Alias thì resolve `VARIABLE_ALIAS` → tên variable đích. Đọc cả `description`, vì nó thường ghi cặp màu, contrast và các chỗ không được dùng |
+| Typography | `figma.getLocalTextStylesAsync()`: family, style, size, lineHeight, letterSpacing |
+| Gradient | `figma.getLocalPaintStylesAsync()`: stops + position |
+| Shadow / glow | `figma.getLocalEffectStylesAsync()`: offset, radius, spread, `boundVariables.color` |
+| Component + variants | `page.findAllWithCriteria({ types: ['COMPONENT_SET', 'COMPONENT'] })`, bỏ qua các `COMPONENT` có parent là `COMPONENT_SET`. Lấy props qua `componentPropertyDefinitions` (chỉ đọc trên set hoặc standalone component) |
+
+**Output `use_figma` bị cắt ở ~20kb, và cắt im lặng.** Với palette lớn, trả hex dạng gọn (`"80:#e2b5ff"`) và bỏ các description lặp lại. Thấy chữ `truncated` thì chạy lại riêng phần bị mất.
+
+**Tài liệu trên canvas (Read me, guide) có thể đã cũ so với token thật.** Đối chiếu số trong docs với variables/styles, và mọi chỗ lệch phải **báo cho user**. Ví dụ đã gặp: Read me ghi lyric 28/22, text style thật là 40/52 và 26/34. Gradient style cũng có thể lệch khỏi token, vì Figma không bind được variable vào gradient stop.
 
 ---
 

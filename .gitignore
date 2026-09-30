@@ -12,3 +12,7 @@ memory/project_audio_editor_reference_repo.md
 
 # Company-internal skill
 skills/tohsoft-ticket/
+
+# Python bytecode
+__pycache__/
+*.pyc

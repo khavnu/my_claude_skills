@@ -29,6 +29,14 @@ AAR TFLite build bằng Bazel trong `libs/` cũng MẤT rule `@UsedByReflection`
 - R8 **không giảm size đáng kể**: 976MB debug → 961MB release. APK này là model chứ không phải code.
   Bài toán size là Play Asset Delivery, chưa động tới.
 
+**Cập nhật 2026-09-30 (lyrics):** AGP `proguard-android-optimize.txt` ĐÃ có
+`-keepclasseswithmembernames class * { native <methods>; }` — nên rule keep native method của
+library là THỪA với app dùng file mặc định, và một phép kiểm R8 còn file mặc định sẽ xanh cả khi xoá
+rule (đã chạy đối chứng, xanh). Lỗi ORT ở trên là JNI tra class theo tên TỪ native (`FindClass`), thứ
+mà file mặc định KHÔNG giữ. Cách kiểm đúng: `-PlyricsR8Check` trong `app/build.gradle.kts` (bỏ file
+mặc định, chỉ keep API public) + chạy đối chứng xoá rule → phải thấy `UnsatisfiedLinkError`.
+Test trên app minify cần keep `androidx.tracing`, `kotlin`, `kotlinx.coroutines` cho test APK.
+
 **Bẫy đo đạc:** đừng đọc "có đang phát không" từ `uiautomator dump` — tôi đã 2 lần đọc ra
 "position stuck 00:00" và suýt báo sai là R8 làm hỏng playback. Nguồn đúng là
 `adb shell dumpsys audio | grep AudioPlaybackConfiguration` → `state:started` (nhớ pid nằm ở dạng
