@@ -24,4 +24,13 @@ Each of these cost a device round trip while building `:audio_stem_split:lyrics:
 - **logcat ring buffer dropped the FIRST result of long sweeps twice** — `adb logcat -G 16M` first.
 - Language auto-detect pinned from a window with 1.3 s of singing → "zh" → 0 lines; only pin with ≥ 8 s speech.
 
-Related: [[project-lyrics-recognition]], [[project-tiny-model-thread-overhead]].
+- **Thermal drift beats configuration** (2026-09-30): the same pipeline run drifted +44% across a
+  series. Comparisons must ALTERNATE A/B, start each run below 45 °C (`dumpsys thermalservice`,
+  take the MAX of "Current temperatures" — BIG is sometimes absent, so waiting on BIG alone hangs),
+  and never let an untimed run warm the phone right before a timed one (`LyricsPipelineDeviceTest
+  -e skipAlone true`; the separation-only baseline had biased N8 by ~+20 pts).
+- **The scratchpad is wiped on host reboot** (happened 2026-09-30: whisper.cpp desktop build, stems,
+  models gone). Measurement outputs that must survive go on the DEVICE (fixtures dir) or into the
+  repo (`docs/lyrics_spike/`), never only the scratchpad.
+
+Related: [[project-lyrics-recognition]], [[project-lyrics-open-items]], [[project-tiny-model-thread-overhead]].

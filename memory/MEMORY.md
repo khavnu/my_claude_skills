@@ -17,8 +17,9 @@
 - [Prior removals](project_prior_removals.md) — GPU/ONNX/NNAPI đã bị loại và ghi lý do; grep repo trước khi đề xuất "ý tưởng chưa thử"; đừng cắt cửa sổ hẹp khi đọc comment
 - [Model rework 2026-09](project_model_rework_2026-09.md) — cả 6 tier: average-mask + bỏ 1 output (suy bằng phép trừ) + chunk 524.288; quantize=float16; dùng ALL_STEM_KEYS không dùng OUTPUT_TENSORS
 - [adb lái SAF picker](project_adb_saf_picker.md) — picker LÁI ĐƯỢC (comment BundledTrack nói ngược là sai); tap node clickable bao ngoài, List view, root Downloads
-- [Lyrics recognition](project_lyrics_recognition.md) — spike 2026-09-29: phải tách vocal; best Pixel 9 = small+greedy+VAD 1 luồng 81.7s/205s; turbo, YAMNet-VAD, -ac đều đã loại có số đo
+- [Lyrics recognition](project_lyrics_recognition.md) — spike 2026-09-29 → module `:lyrics:core`+`:lyrics:whisper` xong 2026-09-30; mọi số đo ở docs/features/lyrics/checklist.md
 - [A/B trên máy & dòng đối chứng](project_device_ab_control_line.md) — so 2 build phải cùng phiên; `invoke` là đối chứng vì DSP không đụng tới nó; lệch >5% thì vứt phép đo
 - [Tiny model thread overhead](project_tiny_model_thread_overhead.md) — Silero VAD trên Pixel 9: 4 luồng 82s, 1 luồng 0.74s; desktop không lộ; đo riêng từng stage với 1 luồng trước khi đòi thay
 - [Figma page listing](reference_figma_page_listing.md) — get_metadata không nodeId chỉ trả page đầu; dùng use_figma figma.root.children để thấy đủ page (file Karaoke Player có 6)
-- [Whisper JNI device traps](project_whisper_jni_device_traps.md) — số CLI không chuyển sang app (2 luồng), -mc 0=n_max_text_ctx, encoder không huỷ được, test APK targetSdk→cpuset, connectedAndroidTest xoá fixture
+- [Whisper JNI device traps](project_whisper_jni_device_traps.md) — số CLI không chuyển sang app (2 luồng), -mc 0=n_max_text_ctx, test APK targetSdk→cpuset, connectedAndroidTest xoá fixture, nhiệt: xen kẽ + <45°C, scratchpad mất khi reboot
+- [Lyrics open items](project_lyrics_open_items.md) — feature xong 2026-09-30; còn mở: A20s chưa đo, Silero tụt giữa câu hát ngân (min_silence 2000 đã thử, loại), chưa có UI; 30 vs 36 dòng đã giải quyết

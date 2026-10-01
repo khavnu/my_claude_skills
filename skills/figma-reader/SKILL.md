@@ -3,7 +3,7 @@ name: figma-reader
 description: Use when given a Figma URL or node to implement as Android/Compose UI — before writing any UI code, to avoid hardcoded colors, wrong typography tokens, or duplicating existing composables.
 metadata:
   author: khapv
-  version: "2.7"
+  version: "2.9"
 ---
 
 # Figma Reader — Design Token Mapper
@@ -365,6 +365,13 @@ Apply via `Modifier.background(brush)`. Colors in gradient still follow the same
 
 When a Figma node is an icon (vector, SVG-like shape):
 
+0. **Icon set lives in Figma as components (e.g. `Icon/<name>`)** → export it yourself, do not ask the user. Proven route (2026-09-30, 65 icons in one go):
+   - `download_assets(nodeId = <icon section>, defaultFormat = "svg")` → curl a single SVG of the whole section. Each icon is a `<g id="Icon/<name>">` holding one `<path>`, in section coordinates (+ export padding, 40 in that file).
+   - Get each icon's x/y relative to the section via `use_figma`, then translate the path back to 0,0 and write `res/drawable/ic_<name>.xml` (viewport 24, `fillColor` white, tint at the call site).
+   - Only works when the path uses absolute commands (`M L H V C Z`). Check with `grep -oE ' d="[^"]*"' | grep -oE '[a-zA-Z]' | sort -u` before translating.
+   - The section export rounds to 3 decimals. Measured max error 0.0005 viewport units (0.0035px at 48dp), invisible.
+   - Don't use per-node `exportAsync` via `use_figma`: its output is cut at ~20kb, so you would have to hand-copy path data.
+   - Verify: render every drawable (list via reflection on `R.drawable`) on a device next to a Figma screenshot of the section.
 1. **Search existing drawables first** — `grep -r "ic_<name>" app/src/main/res/drawable/` — or browse `res/drawable/` visually if icon name is ambiguous.
 2. **If found** → use `painterResource(R.drawable.ic_<name>)` inside `Icon(painter = ...)`.
 3. **If not found** → ask the user to export and add the SVG as a vector drawable. Do **not** recreate icons in code.
@@ -382,6 +389,7 @@ When a Figma node is an icon (vector, SVG-like shape):
 | `flex-wrap` | `FlowRow` |
 | `w-full` / fill container | `Modifier.fillMaxWidth()` |
 | `h-full` / fill container (vertical) | `Modifier.fillMaxHeight()` |
+| Frame hug (`AUTO` sizing) chứa Text | **Không** đặt `.height(N)` bằng đúng tổng Figma. Để hug theo padding + content. Đặt cố định thì Text bị clip phần chân chữ (`y`, `g`) và dấu tiếng Việt, vì chiều cao đo được của Text lớn hơn lineHeight vài px. Đã xảy ra với NavItem 80dp (2026-09-30) |
 | `flex-1` / fill remaining space | `Modifier.weight(1f)` |
 | `items-center` | `verticalAlignment = Alignment.CenterVertically` (Row) / `horizontalAlignment = Alignment.CenterHorizontally` (Column) |
 | `justify-between` | `Arrangement.SpaceBetween` |

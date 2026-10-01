@@ -15,6 +15,13 @@ part of the output.
 ## Workflow
 1. **Brief:** each screen's purpose, user, *conditions of use* (distance, one
    hand, dark room, glance vs. read), platform, version scope. Ask when unsure.
+   **Taste-dependent picks the user will see** (preset images, visualizer or
+   chart styles, theme/color presets, fonts, EQ or timer presets, icon
+   metaphors): research what is most viewed / starred / rated *before*
+   choosing, time-boxed ~15–20 min, and write source + date + numbers (+
+   licence for reused content) into the repo docs. Skip it for anything a rule
+   already decides (contrast, touch target, platform guideline, tech limit)
+   and for trivial picks. Sources that work: `references/research-sources.md`.
 2. **Foundations** as tokens: tonal primitives → semantic roles (one meaning each,
    with pairs, guaranteed contrast and "never" rules in every description), type
    scale, spacing and radius scales. See `principles.md` §6b.
@@ -26,7 +33,8 @@ part of the output.
 Load when needed: `references/principles.md` (hierarchy, color, type, layout,
 UX laws, motion) · `references/specs.md` (standard sizes) ·
 `references/figma-workflow.md` (Figma MCP structure + API traps) ·
-`scripts/tonal_palette.py` (tone ramps from brand seeds).
+`scripts/tonal_palette.py` (tone ramps from brand seeds) ·
+`references/research-sources.md` (popularity research without API keys).
 
 ## Review Gate — REQUIRED in every done / hand-off / progress report
 One table per screen. Each row: a **measured value + how it was measured**.

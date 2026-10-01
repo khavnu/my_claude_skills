@@ -25,7 +25,8 @@ file structure and the traps that cost real retries.
 | Symptom | Cause | Fix |
 |---|---|---|
 | Bound fill renders black on an instance sublayer | Base paint color was `{0,0,0}`; render uses it | Build the base paint from `Object.values(v.valuesByMode)[0]`, then bind |
-| Paint opacity silently 1 | Opacity added after binding (`{...bound, opacity}`) | Put `opacity` in the base paint before `setBoundVariableForPaint`, or use node opacity |
+| Paint opacity silently 1 | `setBoundVariableForPaint` dropped `opacity` even when it was in the base paint (2026-10-01, scrim/dim layers) | Use node `opacity` for translucent bound fills; verify by reading `fills[0].opacity` back |
+| Theme/brand variants without duplicating frames | — | Add modes to the Color collection and `frame.setExplicitVariableModeForCollection(collection, modeId)`; tiles can each carry their own mode |
 | Component collapses to 10 px | `resize()` after `primaryAxisSizingMode='AUTO'` resets to FIXED | Resize first, then set AUTO |
 | "Cannot override size in an instance" | `rescale()`/`resize()`/`x` on a nested instance layer | Rescale the outer instance; model values (slider level) as a variant axis |
 | Rescaled instance has huge corners | Rescale multiplies bound radius | Make a Size variant per size instead of scaling |
@@ -41,6 +42,11 @@ file structure and the traps that cost real retries.
 | Bulk swap changed unrelated buttons (top-bar icons became "play") | `findAll` by component set matched every IconButton in the frame | Scope by parent layer name (`panel`, `compact row`) before bulk `setProperties` |
 | Figma "text" matched when you meant a label | Same as icons: TEXT layers include glyphs | Filter by layer name, never by type alone |
 | Script half-applied? | Failed scripts roll back | Re-read canvas only if `safeToRetryWithoutCanvasRead` is false |
+| Helper rows/columns show white boxes on a dark screen | `figma.createAutoLayout()` frames get a default white fill | Set `fills = []` right after creating every structural auto-layout frame |
+| Spacer made with an empty `createAutoLayout()` adds a 100px gap | An auto-layout frame with no children keeps its 100×100 default | Use `itemSpacing`/padding, or a plain frame `resize(1, N)` |
+| `getStyleByIdAsync(id)` returns null | Style ids read via `node.fillStyleId` / style lists end in a trailing `,` (`S:abc…,`) | Look styles up by name from `getLocal*StylesAsync()` |
+| `remove: node … does not exist` while removing instances | `findAll(INSTANCE)` also returns instances nested inside the ones you remove first | Remove only `children.filter(...)`, never a deep `findAll` result |
+| Screenshot URL returns a 74-byte 404 JSON | `get_screenshot` URLs had expired by the time curl ran (2026-10-01) | Download right after the call, or judge from `node.screenshot()` inline |
 
 ## Realistic images (covers, avatars, photos)
 - Generate your own abstract images (PIL) instead of copyrighted art; vary hue
