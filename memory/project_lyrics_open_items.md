@@ -18,8 +18,11 @@ or deferred (`docs/features/lyrics/checklist.md`, Nhật ký quyết định has
   Silero also dips inside a sustained sung phrase (1.8 s) — `vadMinSilenceMs = 2000` fixes the seam
   but broke the corpus (lost a verse, cross-line loops), so default stays 100 ms. Numbers:
   checklist Nhật ký. Line COUNT is a bad quality metric here — compare words/coverage per line.
-- **No product UI / DI wiring.** `:app` depends on `:lyrics:whisper` only so the R8 check
-  (`-PlyricsR8Check`) exercises it; no screen uses it. Model delivery (190 MB) is out of scope.
+- ~~No product UI~~ — corrected 2026-10-02: the Streaming screen shows lyrics (ticker above
+  "Phát tất cả", `DefaultLyricsRepository`, model read in place from app assets). Model delivery for
+  product is still the user's decision.
+- **HallucinationFilter may drop fast rap** (Em Bé: 953 → 254 words after filtering, 2026-10-02
+  host corpus) — not yet split into real hallucination vs rap; not fixed.
 - Targets relaxed by the user (not by Claude): N3 (≤ 35 s on a track whose opening the model hears;
   pop exempt), N8 (pipeline ≤ recognition-alone + 45%). N1 accepted at +14–16% for sessions.
 

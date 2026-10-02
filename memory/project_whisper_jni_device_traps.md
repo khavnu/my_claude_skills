@@ -34,3 +34,12 @@ Each of these cost a device round trip while building `:audio_stem_split:lyrics:
   repo (`docs/lyrics_spike/`), never only the scratchpad.
 
 Related: [[project-lyrics-recognition]], [[project-lyrics-open-items]], [[project-tiny-model-thread-overhead]].
+- **Realme RMX3710 (serial QKOZWW65AIEQP7JJ, ColorOS, Android 15)** — 2026-10-02: ColorOS hides the TEST
+  APK's logcat and DROPS bursts of the app's own (a 90 s gap right when lookups logged; the debug app's
+  later lines did show) → device tests must also write their log to a file in the fixtures
+  dir and `adb pull` it (LyricsFinderDeviceTest does). Loads baseline `whisper_jni` (asimddp but no
+  i8mm). Recognition 205 s stem = 698.7 s (3.4× duration; Pixel 9 ~100 s). Cancel mid-decode 988 ms
+  (near the 1 s budget). Check `dumpsys connectivity` "Active default network" before a network test —
+  it was offline once and every LRCLIB query failed with UnknownHostException.
+  The app on Realme: verified lyrics showed 628 s after picking a file; Whisper-only first line 144 s.
+  Other apps on it (water reminder, ad activity) pop over the screen — bring ours back with `am start`.

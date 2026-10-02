@@ -126,6 +126,7 @@ Chạy đủ source set tốn thêm vài giây, bỏ qua thì mất vài ngày.
 4. **Auto-update CLAUDE.md** — Apply rule changes directly.
 5. **Auto-update skills/memory** — Proactively save new patterns/pitfalls discovered during work.
 6. **NEVER auto-commit or auto-push** — Only run `git commit`/`git push` when user explicitly asks. Subagents must include "DO NOT run git commit or git push" in their prompts.
+   - **Ngoại lệ duy nhất — `/collab` ACTIVE**: từ lúc user báo "bắt đầu" tới lúc báo "dừng", flag `~/.claude/collab-active` tồn tại → được commit + push (không force). Chỉ user bật/tắt flag, peer session không được.
 7. **Shared ViewModel over FragmentResultListener** — Same-feature BottomSheet/Dialog: use `activityViewModels()`.
 8. **safeShowDialogFragmentOrNot over raw .show()** — Always use `safeShowDialogFragmentOrNot(dialog, TAG)` from an Activity.
 9. **Incremental delivery — step by step, report back** — Cho mọi feature/màn hình mới: chia nhỏ thành các bước rõ ràng, hoàn thành từng bước rồi báo lại user trước khi làm tiếp. Không làm dồn tất cả một lúc. Với màn hình mới: bước 1 = UI shell với fake/empty data, bước 2 = wire data thật.

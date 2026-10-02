@@ -21,7 +21,7 @@ Fixed and committed on `fixbugs`:
 Deferred by the user:
 - #72: clock set back hides later days in History. Keep as is "until requested"; option 2, extending History to the latest day that has data, was explained.
 - #101: RTL; see [[rtl-deferred]].
-- #20/#88: late or lost alarms; see [[reminder-alarm-lateness-deferred]].
+- #20/#88: late or lost alarms. The "lost" part was fixed on 2026-10-02 (649db13); "late": exact alarms + Watercat banner built 2026-10-02 (Realme still windows them). See [[reminder-alarm-lateness-deferred]].
 - #100: Arabic digits; not tested (needs the Arabic layout added to the user's Gboard).
 
 Still open, never discussed in detail: #33 (records list not lazy, one Lottie per row), #70 (goal 507 fl oz is about the 15000 cap), #65 (grammar, e.g. "1 times / day"), #80 (fl oz rows vs total: 58% of days are off by up to 0.4 fl oz; recommended making the total the sum of the rounded rows), #44 (tiny custom cups give 0; recommended a minimum cup size), #5, #112, plus the device-only checks (tablet, font size).

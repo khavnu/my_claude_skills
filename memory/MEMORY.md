@@ -21,5 +21,7 @@
 - [A/B trên máy & dòng đối chứng](project_device_ab_control_line.md) — so 2 build phải cùng phiên; `invoke` là đối chứng vì DSP không đụng tới nó; lệch >5% thì vứt phép đo
 - [Tiny model thread overhead](project_tiny_model_thread_overhead.md) — Silero VAD trên Pixel 9: 4 luồng 82s, 1 luồng 0.74s; desktop không lộ; đo riêng từng stage với 1 luồng trước khi đòi thay
 - [Figma page listing](reference_figma_page_listing.md) — get_metadata không nodeId chỉ trả page đầu; dùng use_figma figma.root.children để thấy đủ page (file Karaoke Player có 6)
-- [Whisper JNI device traps](project_whisper_jni_device_traps.md) — số CLI không chuyển sang app (2 luồng), -mc 0=n_max_text_ctx, test APK targetSdk→cpuset, connectedAndroidTest xoá fixture, nhiệt: xen kẽ + <45°C, scratchpad mất khi reboot
-- [Lyrics open items](project_lyrics_open_items.md) — feature xong 2026-09-30; còn mở: A20s chưa đo, Silero tụt giữa câu hát ngân (min_silence 2000 đã thử, loại), chưa có UI; 30 vs 36 dòng đã giải quyết
+- [Whisper JNI device traps](project_whisper_jni_device_traps.md) — số CLI không chuyển sang app (2 luồng), -mc 0=n_max_text_ctx, test APK targetSdk→cpuset, connectedAndroidTest xoá fixture, nhiệt: xen kẽ + <45°C, scratchpad mất khi reboot; Realme ColorOS ẩn logcat app → ghi log ra file, nhận dạng 3.4× thời lượng
+- [Lyrics open items](project_lyrics_open_items.md) — feature xong 2026-09-30; còn mở: A20s chưa đo, Silero tụt giữa câu hát ngân (min_silence 2000 đã thử, loại), filter có thể bỏ rap nhanh; UI Streaming đã có; 30 vs 36 dòng đã giải quyết
+- [Lyrics sources](project_lyrics_sources.md) — embedded/file/LRCLIB/Whisper + verifier; corpus NGOÀI repo ở lyrics-corpus/, lệnh chạy lại; bẫy: whisper-cli thiếu fix VadSpeechCut, LRCLIB q không tìm theo lời
+- [CombinedPlayer device test](project_combined_player_device_test.md) — bài bundled (android.resource://) không bao giờ được lưu → test Files phải qua SAF; run-as sh -c không expand glob

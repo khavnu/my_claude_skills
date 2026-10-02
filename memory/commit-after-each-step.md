@@ -1,20 +1,20 @@
 ---
 name: commit-after-each-step
-description: "WMusi — commit after every verified step; push at the end of each milestone by lifting the push hook temporarily, then restoring it"
+description: "WMusi — commit after every verified step and push per milestone (hooks for commit/push removed by the user 2026-10-02; destructive-op guard kept)"
 metadata:
   node_type: memory
   type: feedback
   originSessionId: e7439767-dcde-4ea8-b28d-b211a6457f14
-  modified: 2026-10-01T10:23:59.676Z
+  modified: 2026-10-02T10:19:44.804Z
 ---
 
-2026-09-30 the user said: "Có kết quả thì bạn commit, chuyển sang các bước tiếp theo, nhớ commit sau mỗi lần làm xong nhé". In this project, commit as soon as a step is done and verified (tests pass, checklist evidence updated), then move on without waiting.
+**Current rule (2026-10-02, latest):** the user asked me to remove the PreToolUse hook's commit and push blocks. Quote: "bạn gỡ các hook về chặn commit và push cho tôi nhé, tôi sẽ báo bạn bổ sung lại khi cần". Done: the hook in `~/.claude/settings.json` now blocks only destructive local ops (`reset --hard`, `checkout .`, `restore .`, `clean -f`, `branch -D`). The backup from before the change is in this session's scratchpad (`settings.before-unhook.json`). The standing WMusi instruction from 2026-09-30/10-01 applies again: commit after each verified step, push at the end of each milestone, and never force-push.
 
-2026-10-01 (updated) the user added: "sau khi xong sẽ commit, gỡ hook push tạm thời và push lên nhé, sau đó revert push hook — Sau đó sẽ chuyển sang task khác, quy trình vẫn như thế (tự động commit, push...)". So at the end of each milestone/task: commit, push, move to the next one — standing instruction, no need to ask again.
-
-**Why:** the global CLAUDE.md forbids auto-commit/push unless the user explicitly asks; the user has asked, as a standing instruction for WMusi.
+**Why:** the user wants commits to flow again. A short-lived `/collab` flag rule (CLAUDE.md rule 6, flag `~/.claude/collab-active`) had been blocking every commit in WMusi.
 
 **How to apply:**
-- One commit per completed step, attribution trailer, keep `.idea/` out.
-- Push: the PreToolUse Bash hook in `~/.claude/settings.json` blocks any command whose text matches `git\s+(push|reset\s+--hard|…)` — even a grep for the words. To push: remove `push|` from that regex, run the push, then put `push|` back immediately and check the file is identical to before (diff against a copy). Never leave it lifted.
-- The same hook's commit branch did not block commits in WMusi (verified 2026-10-01 with `git commit --dry-run`, exit 0).
+- One commit per completed and verified step. Add the attribution trailer and keep `.idea/` out.
+- When the user says to restore the hooks, put the old block back from the backup and stop committing on my own.
+- If a parallel task is mid-edit in the same tree, commit a snapshot without touching the tree: `git add -A -- . ':!.idea'`, then `git write-tree` (save the sha), and later `git commit-tree <tree> -p HEAD -m ...` followed by `git update-ref HEAD <commit>`.
+- New Gradle module: add its `/build` `.gitignore` before the first add. 450+ build files slipped in once.
+- A parallel design session commits docs in this repo. Leave its commits out of review ranges, and never rewrite them after a push.

@@ -28,6 +28,7 @@ file structure and the traps that cost real retries.
 | Paint opacity silently 1 | `setBoundVariableForPaint` dropped `opacity` even when it was in the base paint (2026-10-01, scrim/dim layers) | Use node `opacity` for translucent bound fills; verify by reading `fills[0].opacity` back |
 | Text shows an empty box | Plus Jakarta Sans has no ⇄ ⏱ (and most emoji: ♥ renders as a red emoji) | Write words or use an Icon component; scan new copy with `/[⇄⏱]/` before shipping |
 | Edited the wrong note/pill | `section.findOne(n=>n.name==='superseded note')` returns the first match, not the one above your frame | Pick by geometry (same x, directly above) or keep the created id |
+| Frames left their Section after a multi-frame screenshot | `figma.group(nodes, page)` → `ungroup` reparents the frames to the group's parent (the page) | Group inside the frames' own section (`figma.group(nodes, section)`), or screenshot each frame; after any group/ungroup, list page-level frames and move them back |
 | Theme/brand variants without duplicating frames | — | Add modes to the Color collection and `frame.setExplicitVariableModeForCollection(collection, modeId)`; tiles can each carry their own mode |
 | Component collapses to 10 px | `resize()` after `primaryAxisSizingMode='AUTO'` resets to FIXED | Resize first, then set AUTO |
 | "Cannot override size in an instance" | `rescale()`/`resize()`/`x` on a nested instance layer | Rescale the outer instance; model values (slider level) as a variant axis |
