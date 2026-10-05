@@ -1,6 +1,6 @@
 ---
 name: health-connect-feature
-description: Health Connect sync (commit fda4635, 2026-10-02): user decisions, review minors still open, and a test gotcha hit while building it
+description: Health Connect write (fda4635) + read of other apps' drinks (d7b1f89), 2026-10-02: decisions, open minors, test gotcha
 metadata:
   type: project
 ---
@@ -24,3 +24,16 @@ Decisions made by the user: Settings "Health Connect" switch row below "Intake g
 Test gotcha (cost one debug cycle): `TestScope.advanceUntilIdle()` does not run coroutines launched in `backgroundScope`. A class under test that launches on an injected scope must get `this` (the TestScope), or the "nothing happens" tests pass vacuously. Verify by checking that the positive tests fail first.
 
 Related: [[competitor-apps-survey]] [[linux-device-testing]]
+
+Read side, commit `d7b1f89` (plan `~/.claude/plans/2026-10-02-health-connect-read.md`). Other apps' drinks join the intake table (`source_name`, unique `health_record_id`; DB v2 AutoMigration). They count like own drinks, are read-only (the repository refuses edit and delete; the mirror skips them), and are imported on foreground plus right after enabling the switch. The first read covers 30 days; later reads use the Changes API with the token in DataStore; a full re-read drops missing imports. Reading needs READ and WRITE. Source labels resolve via `<queries>` on Health Connect's rationale intents. iOS is untouched: `HealthSync`'s read methods have default bodies (user rule: no iOS changes).
+Open review minors (read side):
+- M2: the import day uses the device zone, not the record's `startZoneOffset`.
+- M3: one transaction per change.
+- M4: imports count toward the 15000 ml manual cap (ask the user).
+- M6: `readGranted()` has no caller.
+- M7: READ is asked again on each off→on after a denial.
+- M8: the imported row needs `mergeDescendants` for a11y.
+- M10: `room3-patterns.md` still says "keep version 1".
+- M11: an intake id can be reused after the migration rebuild.
+Open product questions: should imports hide or disappear when the switch is off or READ is lost; how to treat future-dated records.
+Device trick: WaterMinder on the Pixel 9 already syncs with Health Connect, so use it as the "other app" (it shows an ad after logging; leave the ad alone).

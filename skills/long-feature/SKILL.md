@@ -41,6 +41,7 @@ Quy trình cho feature khó và dài. Khác quy trình thường (chờ user tes
 - Mỗi mục phải có **tiêu chí xong kiểm chứng được**: tên test, lệnh đo, con số, file mẫu, thiết bị.
   Không viết được tiêu chí → mục đó chưa rõ → hỏi user.
 - Mục nâng cao đo trên **input thực tế và đủ lớn** (vd file ≥10 phút), vì input ngắn giấu lỗi.
+- Edge case: chạy skill `edge-cases`, các dòng có Verify đưa vào checklist như mục thường.
 - ⏸ **Checkpoint bắt buộc**: user duyệt checklist trước khi code. Checklist là hợp đồng.
 
 ### Phase 2–3 — Thực hiện tự chủ

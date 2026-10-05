@@ -13,6 +13,8 @@ Ask for missing info before generating:
 - What data from Repository?
 - Does it need a BottomSheet?
 
+Before generating code for a real feature (not a bare scaffold): run the `edge-cases` skill and get the table approved with the plan.
+
 ---
 
 ## File Structure

@@ -378,6 +378,7 @@ Khi nhận yêu cầu viết plan, tự chọn skill phù hợp — không hỏi
 3. **UI component mới**: tìm component có sẵn trong codebase trước.
 4. **Async/Cancellation**: design cancel path ngay từ đầu — điều gì xảy ra khi user cancel/background?
 5. **Dialog UX**: dismiss condition phụ thuộc async step nào?
+6. **Edge cases**: dùng skill `edge-cases` — bảng 9 nhóm (device/API band, permission, lifecycle, time, data, failure, background, presentation, cross-feature), mỗi dòng có cách verify, nằm trong plan user duyệt.
 
 ---
 
