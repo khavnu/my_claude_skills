@@ -1,4 +1,3 @@
-
 ---
 name: android-clean-architecture
 description: Design Android applications using scalable Clean Architecture with Domain, Data, and Presentation layers, Repository pattern, UseCases, Mappers, and Hilt dependency injection.

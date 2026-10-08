@@ -29,6 +29,6 @@
 - [Lyrics speed next](project_lyrics_speed_next.md) — việc kế tiếp sau stream-resume; ý tưởng + số đo ở docs/features/lyrics-speed/ideas.md; Q4 đã được gỡ; bắt đầu bằng checklist long-feature
 - [Device measurement confounds](project_device_measurement_confounds.md) — dumpsys meminfo mỗi 15 s gây giật phát 0,1 s: đo RAM và đo giật phải tách lượt; dò nghẽn lyrics bằng log 'fed until (read/whisper/aligner)'
 - [Realme CPU saturated](project_realme_cpu_saturated.md) — Helio G88 2 lõi lớn: thêm luồng/cửa sổ nhỏ chỉ cướp CPU của tách (K11, R5 thua); chỉ GIẢM việc mới thắng
-- [Lyrics device run recipe](project_lyrics_device_run_recipe.md) — b_runs.sh + TEMP manual-lyrics hook + RAM riêng lượt; A/B corpus thì chạy báo cáo trên bản backup, đừng so file report cũ
+- [Lyrics device run recipe](project_lyrics_device_run_recipe.md) — script lái máy ở lyrics-corpus/tools/device (scratchpad mất khi reboot); Pixel là máy của user; RAM riêng lượt; A/B corpus chạy trên bản backup
 - [Open singing datasets](reference_open_singing_datasets.md) — de/en JamendoLyrics, ru MulJam, ja PJS, pt Commons; da/ro/fi/tr/hi gần như không có bản hát mở
 - [Jamendo client_id pending](project_jamendo_client_id_pending.md) — user sẽ tạo client_id Jamendo rồi báo; dùng qua biến môi trường, không lưu giá trị; CC-NC dataset đã được duyệt cho test

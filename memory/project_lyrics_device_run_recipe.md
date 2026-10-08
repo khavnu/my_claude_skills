@@ -23,3 +23,8 @@ metadata:
    (list long, other files on top); just rerun that one song (`RUNS="song.mp3:2"`) — not an app bug.
 6. **New alignment model? check the blank first**: the most frequent argmax token on a FLEURS pseudo-song must be the
    token the lib takes as blank (`<pad>`/`[PAD]`). Vakyansh/fairseq models (and tr) use `<s>` id 0 — see checklist K7.
+7. **Scratchpad scripts are gone after a reboot** (2026-10-08 lost b_runs.sh / realme_ui.py / timeline.py). Device drivers now
+   live in `lyrics-corpus/tools/device/` (pixel_ui.py: tap by text + `pick` via picker Downloads root; px_run.sh; px_offline.sh
+   which always turns airplane mode back off). Keep new device scripts THERE, not in the scratchpad.
+8. **The Pixel 9 is the user's own phone**: notifications/heads-ups steal taps (`cmd statusbar collapse` before each tap);
+   never `pkill -f` a pattern that is in the same command line (it kills the shell — airplane mode stayed ON once).

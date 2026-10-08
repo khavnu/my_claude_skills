@@ -42,7 +42,35 @@ Quy trình cho feature khó và dài. Khác quy trình thường (chờ user tes
   Không viết được tiêu chí → mục đó chưa rõ → hỏi user.
 - Mục nâng cao đo trên **input thực tế và đủ lớn** (vd file ≥10 phút), vì input ngắn giấu lỗi.
 - Edge case: chạy skill `edge-cases`, các dòng có Verify đưa vào checklist như mục thường.
+- Feature có màn hình hoặc component UI mới hay sửa lại → soạn phần UI theo **Lối đi UI** bên dưới.
 - ⏸ **Checkpoint bắt buộc**: user duyệt checklist trước khi code. Checklist là hợp đồng.
+
+### Lối đi UI (khi feature có UI)
+"Build xanh" và "test pass" không chứng minh được UI đúng thiết kế. Mục UI chỉ được tick khi có bằng chứng nhìn thấy được.
+
+**Soạn checklist (Phase 1):**
+- Mỗi màn hình hoặc component ghi rõ **nguồn thiết kế**: Figma URL + node id, hoặc "không có Figma".
+  - Có Figma → chạy `figma-reader` tới hết Step 2.6 (token, layout overview, báo cáo composable tái dùng). Các bước
+    đó cần user xác nhận, nên gộp kết quả vào checklist để user **duyệt cùng lúc** với checklist, không hỏi rải rác lúc code.
+  - Không có Figma → chạy `create-design` phần Brief và chốt hướng thiết kế. User duyệt cùng checklist.
+- Mỗi màn hình tách 2 mục theo Rule 9, theo đúng thứ tự: **shell với fake data** → **wire data thật**.
+- Liệt kê các **trạng thái** cần chụp: empty / loading / error / dữ liệu dài nhất, cùng các biến thể project hỗ trợ
+  (dark mode, landscape, tablet, font scale lớn, RTL). Bỏ biến thể nào thì ghi lý do.
+
+**Tiêu chí "Xong khi" cho mục UI** — đủ cả 3:
+1. Screenshot trên device/emulator cho từng trạng thái đã liệt kê (`adb exec-out screencap -p > <file>`), lưu ở
+   `docs/features/<feature-name>/evidence/`.
+2. Đối chiếu với Figma screenshot (`get_screenshot` của node), liệt kê từng chỗ khác biệt. Mục chỉ tick khi
+   danh sách khác biệt trống, hoặc mỗi chỗ còn lại đã được user chấp nhận (ghi vào Nhật ký quyết định).
+   Không có Figma → thay bằng Review Gate của `create-design` trên screenshot.
+3. Có Figma → đã làm `figma-reader` Step 2.7 (audit thuộc tính toàn node) và Step 4 (checklist sau khi viết code).
+
+**Khi thực hiện (Phase 2):**
+- Làm shell trước, chụp và đối chiếu xong mới wire data. Wire xong thì chụp lại với data thật, vì text dài hoặc
+  số lớn hay làm vỡ layout mà fake data không lộ ra.
+- Chỗ khác biệt mà thiết kế không nói rõ (Figma thiếu trạng thái, hai frame mâu thuẫn, không biết khác biệt có chủ đích không)
+  → dừng hỏi user (Rule 10). **Không tự chấp nhận khác biệt.**
+- Ghi bằng chứng dưới mục: đường dẫn screenshot, node id đã đối chiếu, danh sách khác biệt và cách xử lý từng chỗ.
 
 ### Phase 2–3 — Thực hiện tự chủ
 - Làm lần lượt từng mục. Tự verify bằng unit test, androidTest trên device hoặc đo qua `adb`, theo đúng
@@ -97,6 +125,16 @@ Trạng thái: Phase <n> · Cập nhật: <YYYY-MM-DD>
 - [ ] A1. <yêu cầu>
   - Xong khi: <tiêu chí kiểm chứng được>
   - Bằng chứng: <test / lệnh / kết quả — điền khi tick>
+
+### Nhóm UI — <màn hình> (chỉ khi có UI; xem Lối đi UI)
+- Nguồn thiết kế: <Figma URL + node id | không có Figma → brief create-design>
+- Trạng thái chụp: <empty / loading / error / dữ liệu dài / dark / landscape / …>
+- [ ] U1. Shell với fake data
+  - Xong khi: screenshot từng trạng thái + đối chiếu Figma, không còn khác biệt chưa được duyệt
+  - Bằng chứng: <evidence/…png · node id · khác biệt + xử lý>
+- [ ] U2. Wire data thật
+  - Xong khi: chụp lại với data thật, layout không vỡ
+  - Bằng chứng:
 
 ## Nâng cao (target & ràng buộc)
 | # | Chỉ số | Target | Mốc đối thủ | Cách đo (thiết bị, input) | Kết quả | ✓ |

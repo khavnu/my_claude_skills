@@ -17,3 +17,5 @@ Design-session asks are listed at the bottom of docs/design/audit-2026-10-07-dec
 
 **Why:** the user asked to stop and rest; this is the agreed backlog so nothing is re-proposed or lost.
 **How to apply:** start from item 1; re-check git log first — items may already be done.
+
+**2026-10-08 13:xx:** Undo queue-slot DONE — cd92156 + review fixes cec5dd0 pushed (3 Important + minors; WMusiPlayerTest compiled, not run on device). Next: orchestra wave 1 (T-3 qa-playback, T-4 qa-ux) once the user says to open sessions.

@@ -1,7 +1,6 @@
 ---
 name: orchestra
 description: Use when the user runs /orchestra to turn one session into a lead (main) that plans an idea into tasks, hands them to parallel worker CLI sessions on their own git worktrees, reviews their branches and merges them locally — or runs /orchestra join to make a session one of those workers.
-disable-model-invocation: true
 argument-hint: <goal or idea>  |  join <task-id> <name> <worktree-path> [— summary]
 ---
 
