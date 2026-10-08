@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+AGENTBUS_HOME="${AGENTBUS_HOME:-$HOME/tools/agentbus}"
+exec "$AGENTBUS_HOME/py" "$AGENTBUS_HOME/bus.py" "${@:-agents}"

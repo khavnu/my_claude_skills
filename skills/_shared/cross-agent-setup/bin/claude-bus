@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Starts an interactive Claude on the agent bus. Hooks come from a per-launch
+# --settings file, so plain `claude` sessions and ~/.claude/settings.json stay untouched.
+# Usage: claude-bus [claude flags] ["first prompt"] — honours CLAUDE_CONFIG_DIR (see claudek-bus).
+AGENTBUS_HOME="${AGENTBUS_HOME:-$HOME/tools/agentbus}"
+# The channel runs under the bare interpreter (sys.executable), so the bundled
+# deps must reach it through the inherited environment.
+export PYTHONPATH="$AGENTBUS_HOME/.deps${PYTHONPATH:+:$PYTHONPATH}"
+export AGENTBUS_PYTHON="$AGENTBUS_HOME/py"
+source "$AGENTBUS_HOME/shell.sh"
+# shell.sh only briefs a bare start; a worker launched with a first prompt needs it too.
+_agentbus_claude_channel --settings "$AGENTBUS_HOME/claude-settings.json" \
+    --append-system-prompt "$(_agentbus_brief claude)" "$@"

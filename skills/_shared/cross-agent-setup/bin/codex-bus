@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Starts Codex on the agent bus with the user's standard full-access flags.
+# Attached to the shared app-server daemon (--remote) so `codex queue` can wake an
+# idle window; hooks come from ~/.codex/hooks.json (Codex has no per-launch hooks).
+# Usage: codex-bus ["first prompt"] — the bus briefing is prepended to it.
+AGENTBUS_HOME="${AGENTBUS_HOME:-$HOME/tools/agentbus}"
+export PYTHONPATH="$AGENTBUS_HOME/.deps${PYTHONPATH:+:$PYTHONPATH}"
+export AGENTBUS_PYTHON="$AGENTBUS_HOME/py"
+source "$AGENTBUS_HOME/shell.sh"
+PROMPT="$(_agentbus_brief codex)"
+[ -n "${1:-}" ] && PROMPT="$PROMPT
+
+$1"
+# --remote needs the shared daemon; the first connect fails with "No such file" if it is not up.
+if [ "${AGENTBUS_CODEX_REMOTE:-unix://}" = "unix://" ]; then
+    /usr/local/bin/codex app-server daemon start >/dev/null 2>&1 \
+        || echo "codex-bus: could not start the app-server daemon (try: codex app-server daemon start)" >&2
+fi
+exec /usr/local/bin/codex --remote "${AGENTBUS_CODEX_REMOTE:-unix://}" \
+    --search \
+    -c 'notify=["curl", "-s", "-X", "POST", "http://localhost:32951/refresh", "-d"]' \
+    --dangerously-bypass-approvals-and-sandbox \
+    "$PROMPT"

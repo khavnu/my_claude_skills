@@ -1,7 +1,7 @@
 ---
 name: orchestra
-description: Use when the user runs /orchestra to turn one session into a lead (main) that plans an idea into tasks, hands them to parallel worker CLI sessions on their own git worktrees, reviews their branches and merges them locally — or runs /orchestra join to make a session one of those workers.
-argument-hint: <goal or idea>  |  join <task-id> <name> <worktree-path> [— summary]
+description: Use when the user runs /orchestra to turn one session into a lead (main) that plans an idea into tasks, hands them to parallel worker CLI sessions (Claude by default; another Claude account or Codex via --pool) on their own git worktrees, reviews their branches and merges them locally — or runs /orchestra join to make a session one of those workers.
+argument-hint: <goal or idea> [--pool claudeK,codex]  |  join <task-id> <name> <worktree-path> [— summary]
 ---
 
 # Orchestra — one lead session, several satellite dev sessions
@@ -60,6 +60,8 @@ A worker finds the main repo with `git worktree list` (first row) and uses absol
 3. Group tasks into waves by **hard** dependencies only; capacity decides the rest. Default `max_parallel` = **2**; the user raises it when the PC copes (3–5 at most), lower it for heavy builds.
 4. Show the user: tasks, waves, what main will code itself, the config. Wait for approval.
 
+**Pool** (`--pool`, or the user says another account / CLI may be used): read `~/.claude/skills/_shared/cross-agent.md` before step 2. In the plan, give every task its pool member and reason (allocation table there), and state the transport (agentbus for the whole run). Main stays on this session.
+
 See **Example** at the end for what a good split looks like.
 
 ### Empty project
@@ -78,7 +80,9 @@ After approval (ACTIVE):
 
 ## Main — ACTIVE
 
-**Start:** add `.claude/orchestra/` to `.git/info/exclude`, call `ListAgents` and read this session's own name from its first line ("This session is <name>"), write `board.md` with that name as `main session` (workers message main by it), note this session's permission mode as `permission mode` (from the system prompt; ask the user if unsure). Schedule the heartbeat only once a worker is live (see Heartbeat).
+**Start:** add `.claude/orchestra/` to `.git/info/exclude`, call `ListAgents` and read this session's own name from its first line ("This session is <name>") — with a pool instead run `$BUS name orchestra-<repo>` and use the printed handle (this session must have been started with `claude-bus`; if not, tell the user to restart it that way first) — write `board.md` with that name as `main session` (workers message main by it), note this session's permission mode as `permission mode` (from the system prompt; ask the user if unsure). Schedule the heartbeat only once a worker is live (see Heartbeat).
+
+**Worker per task.** With a pool, first pick the member (`claude` / `claudeK` / `codex`, see `cross-agent.md`); the model choice below applies to Claude members only, Codex uses its own configured model. Write member + model on the board.
 
 **Model per task.** Pick each worker's model by the task's difficulty and write it on the board:
 - **opus** — concurrency, service/playback lifecycle, IO and codecs, cancellation, anything a fix round would be expensive to redo;
@@ -115,9 +119,11 @@ First time in this folder Claude Code asks to trust it: accept.
 
 Optionally `/rename feature-visualizer` first, for the user's own overview. Opening the session inside the worktree is still better: the project's `CLAUDE.md` loads and the shell starts in the right place.
 
+**Pool runs — main opens the workers itself** with `bus-open <member> <worktree> "orchestra-<repo> · T-<n> <name>" …` (see `cross-agent.md` › Opening members) instead of printing briefs; the brief text becomes the first prompt. A Codex worker cannot run `/orchestra join`; its first prompt is `Use skill cross-agent-peer. Role: orchestra worker T-<n> <name> <worktree>. Main handle: <handle>. <summary>`. Tell the user which windows opened and the first-launch approvals they must accept there.
+
 Print all the wave's briefs at once and tell the user: open them, then say "bắt đầu".
 
-**Readiness.** Each worker, once joined, writes `ready` in its session file and pings main. `ListAgents` may not list worker sessions even though messages flow: record each worker's **address** — the `from` attribute of its first message — in the board's Tasks table, and send to that address. Main keeps a running list for the user: `Ready: T-2 designsystem, T-3 playback · Waiting: T-4 media-library`.
+**Readiness.** Each worker, once joined, writes `ready` in its session file and pings main. `ListAgents` may not list worker sessions even though messages flow: record each worker's **address** — the `from` attribute of its first message, or its bus handle with a pool — in the board's Tasks table, and send to that address. Main keeps a running list for the user: `Ready: T-2 designsystem, T-3 playback · Waiting: T-4 media-library`.
 
 **Dispatch** — on the user's "bắt đầu" / "start":
 
@@ -212,6 +218,7 @@ The file is the record; the message is a ping.
 - **Worker → main:** send to the `main session` name in `board.md`.
 - **Main → worker:** send to the worker's address recorded on the board (the `from` of its messages). `ListAgents` may not list workers; when it does, it confirms they are alive. A worker that restarts gets a new address — take it from its next `ready`.
 - All sessions run in the same permission mode (the brief's `--permission-mode`); otherwise each message waits for the user's approval on the receiving side.
+- **Pool run:** every ping goes over agentbus (`$BUS send claude <handle> "<text>"`), same text, per `cross-agent.md` — never `SendMessage` for some workers and the bus for others.
 
 ```
 [orchestra] <from> → <to>: <event> T-<n>. Read <absolute path>.
@@ -222,7 +229,7 @@ Events — worker → main: `ready`, `question`, `contract-proposal`, `blocked`,
 
 ## Heartbeat
 
-Off by default. Main turns it on only while at least one worker or peer session is live, and deletes it when the last one is merged, stopped or paused; the user may also switch it off and say when sessions open. While on, every session schedules a recurring session-only `CronCreate` at off-minutes (main `5,25,45 * * * *`, workers `15,35,55 * * * *`):
+Off by default. Main turns it on only while at least one worker or peer session is live, and deletes it when the last one is merged, stopped or paused; the user may also switch it off and say when sessions open. Codex workers have no cron: they rely on bus wake, and main tells the user to nudge one that stays silent. While on, every Claude session schedules a recurring session-only `CronCreate` at off-minutes (main `5,25,45 * * * *`, workers `15,35,55 * * * *`):
 
 ```
 [orchestra heartbeat] If /orchestra is ACTIVE: re-read my state files, resume anything in-progress, act on new events. Nothing open → one line and stop.
@@ -264,6 +271,8 @@ Main: ping every worker `[orchestra] main stopping.`, `CronDelete`, and give the
 | Accepting several Highs because the rest is good | At most 1 High, with a follow-up; otherwise changes requested |
 | Removing the worktree while the worker CLI is open | Tell the user to close it first |
 | Sending to a remembered session name or guessing one | Main session name from the board; worker address from its last message |
+| Giving Codex a task that needs a Claude-only skill or MCP | Keep it on a Claude member, or spell every step out in the task file |
+| Two members writing project memory | Only main writes memory; workers note it in their session file |
 | Worker starts coding right after join | Report `ready`, wait for `start` |
 | Dispatching without telling the user who is missing | List every not-ready task with its brief again |
 | Handing out wave 1 of an empty project before the skeleton is on `origin/main` | Wave 0 first: skeleton + module ownership, built, pushed |

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Opens a pool member in a new GNOME Terminal window, on the agent bus.
+# Usage: bus-open <claude|claudeK|codex> <dir> <title> [launcher args… e.g. --permission-mode X "first prompt"]
+# The window stays open (interactive shell) after the CLI exits, so the user can read or relaunch.
+set -euo pipefail
+member="${1:?member}"; dir="${2:?dir}"; title="${3:?title}"; shift 3
+bin="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+case "$member" in
+    claude)  launcher="$bin/claude-bus" ;;
+    claudeK) launcher="$bin/claudek-bus" ;;
+    codex)   launcher="$bin/codex-bus" ;;
+    *) echo "unknown member: $member (claude|claudeK|codex)" >&2; exit 2 ;;
+esac
+[ -d "$dir" ] || { echo "no such dir: $dir" >&2; exit 2; }
+command -v gnome-terminal >/dev/null || { echo "gnome-terminal not found" >&2; exit 3; }
+gnome-terminal --window --title="$title" --working-directory="$dir" -- \
+    bash -c 'printf "\033]0;%s\007" "$1"; launcher="$2"; shift 2; "$launcher" "$@"; exec bash -i' \
+    _ "$title" "$launcher" "$@"
+echo "opened $member in '$dir' (window: $title)"

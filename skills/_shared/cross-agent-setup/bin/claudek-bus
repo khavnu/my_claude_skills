@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# claude-bus on the secondary account (same config dir as `claudek`).
+export CLAUDE_CONFIG_DIR="$HOME/.claude-k"
+exec "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/claude-bus" "$@"

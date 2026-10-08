@@ -29,3 +29,7 @@ Cast float64 **trước** khi cộng, và bật `np.seterr(all='raise')`.
 **3. Wrapper tự viết bọc call site thì phải chặn theo receiver.** Script bọc `.seekTo(` đã bọc nhầm cả
 `viewModel.seekTo(fraction: Float)` — trùng tên nhưng khác hàm. Lọc theo `player.seekTo(` hoặc bỏ qua
 arg khớp `capture(`/`any(`.
+
+**2026-10-08 (lần nữa):** cắt chuỗi cần thay bằng `s[s.index(A):s.index(B) if B in s else len(s)]` — khi đánh dấu B
+không có, đoạn cắt RỖNG và `s.replace('', new)` chèn `new` vào giữa MỌI ký tự (pixel_ui.py thành 80 KB rác).
+**How to apply:** luôn `assert old in s and old` trước `replace`; file nhỏ thì viết lại cả file bằng Write.

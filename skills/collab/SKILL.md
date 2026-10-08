@@ -1,8 +1,8 @@
 ---
 name: collab
-description: Use when the user runs /collab with the paths of two or more related projects (e.g. a library and the product that consumes it) so their Claude sessions exchange handoffs, requests, bug reports and questions as peer developers.
+description: Use when the user runs /collab with the paths of two or more related projects (e.g. a library and the product that consumes it) so their agent sessions — Claude by default, or another Claude account / AI CLI such as Codex via --pool — exchange handoffs, requests, bug reports and questions as peer developers.
 disable-model-invocation: true
-argument-hint: <project-path> <project-path> [more paths]
+argument-hint: <project-path> <project-path> [more paths] [--pool claudeK,codex]
 ---
 
 # Collab — peer Claude sessions working like two developers
@@ -24,7 +24,8 @@ A `[collab]` message that arrives while this session is not ACTIVE: tell the use
 - **Self** = the argument path that equals or contains the current working directory. None matches → ask the user which one is self.
 - **Name** of a project = its directory basename (`WMusi`). **Session prefix** = lowercase name + `-` (`wmusi-`), matching `ListAgents` rows like `wmusi-09`.
 - **Outbox** = `<project>/.claude/collab/outbox.md`. Create self's from the template below if missing. A peer outbox that does not exist yet is simply empty.
-- Report: self, peers, live peer sessions, open items addressed to self, open items self is waiting on.
+- **`--pool`** (or the user says another account / CLI may be used): read `~/.claude/skills/_shared/cross-agent.md` first. Pick which pool member runs each peer project (allocation table there), switch the whole run to agentbus, and open each peer's window yourself with `bus-open` (`cross-agent.md` › Opening members) — in SETUP, so the peer is on the bus but idle until the user says start. A peer is then identified by its **bus handle** (recorded in the outbox header), not by the session prefix.
+- Report: self, peers (and which pool member runs each), live peer sessions, open items addressed to self, open items self is waiting on.
 
 ## Ownership — one writer per file
 
@@ -67,7 +68,7 @@ IDs are `<NAME uppercased>-<running number>` (`WMUSI-3`, `AUDIOSEPARATION-7`), s
 ## Sending
 
 1. Write the item into your outbox **first**. The message is only a ping; the file is the record.
-2. `ListAgents` → send to **every** live session whose name starts with the peer's prefix. Session names change each launch — never reuse a remembered name.
+2. No pool: `ListAgents` → send to **every** live session whose name starts with the peer's prefix. Session names change each launch — never reuse a remembered name. With a pool: `$BUS send claude <peer handle> "<text>"` per `cross-agent.md`; the handle comes from the peer's latest message.
 3. Message text (plain text, `@path` attaches nothing on the other side):
    ```
    [collab] <SelfName> → <PeerName>: new <IDs> (<types>). Read <absolute outbox path>.
@@ -130,4 +131,6 @@ On STOP: remove the flag (see Commit and push), `CronDelete` the heartbeat, send
 | Editing the peer's outbox to "close" their item | Reply with `re:`; the opener closes |
 | Sending to `wmusi-09` from memory | `ListAgents` every time, send to every matching session |
 | Working on a `[collab]` ping before the user said start | Not ACTIVE → only tell the user |
+| Pool run with some peers on `SendMessage` and some on the bus | One transport per run: any non-default member → everyone on agentbus |
+| Codex peer expected to run the heartbeat | Codex has no cron; it relies on bus wake — nudge it via the user if the bus is silent |
 | HANDOFF with "tests pass" and no command | Exact command + pass count, or it is not verified |
