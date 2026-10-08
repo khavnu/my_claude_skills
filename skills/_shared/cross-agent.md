@@ -8,8 +8,8 @@ The user declares what may be used; this session decides who does what.
 
 | Pool member | Launcher (interactive, on the bus) | Account / notes |
 |---|---|---|
-| `claude` | `claude-bus` | Default account (`~/.claude`). Always in the pool. |
-| `claudeK` | `claudek-bus` | Secondary account (`CLAUDE_CONFIG_DIR=~/.claude-k`). Shares skills, `CLAUDE.md`, settings and project memory with `claude` through symlinks; has its own sessions and usage limit. |
+| `claude` (= claudeD) | `claude-bus` | Default account (`~/.claude`), usage in `~/.claude/usage-latest-D.json`. Always in the pool. |
+| `claudeK` | `claudek-bus` | Secondary account (`CLAUDE_CONFIG_DIR=~/.claude-k`), usage in `~/.claude/usage-latest-K.json`. Shares skills, `CLAUDE.md`, settings and project memory with `claude` through symlinks; has its own sessions and usage limit. |
 | `codex` | `codex-bus` | OpenAI Codex CLI, full access (`--dangerously-bypass-approvals-and-sandbox --search`, user's notify hook). Reads `~/.codex/skills/cross-agent-peer` for the protocol; cannot read Claude skills by itself. |
 
 Launchers live in `~/.claude/skills/_shared/cross-agent-setup/bin` (symlinked into `~/.local/bin`) and use agentbus from `$HOME/tools/agentbus`. Each accepts a first prompt as its last argument. `bus-open` opens any of them in a new terminal window (see Opening members). A machine without them → **Setup on a new machine** below.
@@ -25,7 +25,7 @@ Decide per task, write the choice and one-line reason on the board / outbox so t
 | An account near its usage limit (`~/.claude/usage-latest-<K\|D>.json`, status line) | the other account, or `codex` |
 | Long or heavy task | the account with the most remaining limit |
 
-- Main / lead always stays on the session the user started (normally `claude`).
+- Main / lead always stays on the session the user started, on whichever account runs it (check `CLAUDE_CONFIG_DIR`: `~/.claude-k` = `claudeK`, else `claude`); allocate the others relative to it.
 - Never give `codex` a task whose Done-when depends on a Claude-only skill (Figma via MCP, `run-backlog`, …) unless the step is spelled out in the task file.
 - Spread parallel tasks across accounts before stacking them on one.
 

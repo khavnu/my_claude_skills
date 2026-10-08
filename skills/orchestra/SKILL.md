@@ -80,7 +80,7 @@ After approval (ACTIVE):
 
 ## Main — ACTIVE
 
-**Start:** add `.claude/orchestra/` to `.git/info/exclude`, call `ListAgents` and read this session's own name from its first line ("This session is <name>") — with a pool instead run `$BUS name orchestra-<repo>` and use the printed handle (this session must have been started with `claude-bus`; if not, tell the user to restart it that way first) — write `board.md` with that name as `main session` (workers message main by it), note this session's permission mode as `permission mode` (from the system prompt; ask the user if unsure). Schedule the heartbeat only once a worker is live (see Heartbeat).
+**Start:** add `.claude/orchestra/` to `.git/info/exclude`, call `ListAgents` and read this session's own name from its first line ("This session is <name>") — with a pool instead run `$BUS name orchestra-<repo>` and use the printed handle (if this session was not started with `claude-bus` it still sends with `$BUS send` but is not woken by mail: read `$BUS read claude` at the start of every turn and on each heartbeat instead of asking the user to restart — a restart drops main's context; start main with `claude-bus` only at the beginning of a new run) — write `board.md` with that name as `main session` (workers message main by it), note this session's permission mode as `permission mode` (from the system prompt; ask the user if unsure). Schedule the heartbeat only once a worker is live (see Heartbeat).
 
 **Worker per task.** With a pool, first pick the member (`claude` / `claudeK` / `codex`, see `cross-agent.md`); the model choice below applies to Claude members only, Codex uses its own configured model. Write member + model on the board.
 
@@ -96,7 +96,7 @@ git fetch origin
 git worktree add -b feature/<name> <repo-parent>/<repo>-wt/<name> origin/main
 ```
 
-Copy the untracked build files into the worktree, write `tasks/T-<n>-<name>.md`, set the board row to `assigned`, then print the brief in the user's language. The user opens each session themselves from it:
+Copy the untracked build files into the worktree, write `tasks/T-<n>-<name>.md`, set the board row to `assigned`, then **open each worker's window yourself** (below). The brief is what that window runs; print it for the user only when no window can be opened (no display / terminal):
 
 ```
 ── T-3 · visualizer · sonnet ─────────────────────
@@ -119,9 +119,13 @@ First time in this folder Claude Code asks to trust it: accept.
 
 Optionally `/rename feature-visualizer` first, for the user's own overview. Opening the session inside the worktree is still better: the project's `CLAUDE.md` loads and the shell starts in the right place.
 
-**Pool runs — main opens the workers itself** with `bus-open <member> <worktree> "orchestra-<repo> · T-<n> <name>" …` (see `cross-agent.md` › Opening members) instead of printing briefs; the brief text becomes the first prompt. A Codex worker cannot run `/orchestra join`; its first prompt is `Use skill cross-agent-peer. Role: orchestra worker T-<n> <name> <worktree>. Main handle: <handle>. <summary>`. Tell the user which windows opened and the first-launch approvals they must accept there.
+**Opening the windows.** No pool: one new terminal per worker, inside its worktree, on main's account (keep `CLAUDE_CONFIG_DIR` as main has it), e.g. on Linux/GNOME:
+`gnome-terminal --title=feature-<name> --working-directory=<worktree> -- env CLAUDE_CONFIG_DIR=<main's> bash -ic 'claude -n feature-<name> --model <m> --permission-mode <mode> "/orchestra join …"; exec bash'`
+(the trailing `exec bash` keeps the window open after the CLI exits). Tell the user which windows opened and that a first launch may ask them to trust the folder or confirm the permission mode — their consent, never answered for them.
 
-Print all the wave's briefs at once and tell the user: open them, then say "bắt đầu".
+**Pool runs** open the workers with `bus-open <member> <worktree> "orchestra-<repo> · T-<n> <name>" …` (see `cross-agent.md` › Opening members) instead of printing briefs; the brief text becomes the first prompt. A Codex worker cannot run `/orchestra join`; its first prompt is `Use skill cross-agent-peer. Role: orchestra worker T-<n> <name> <worktree>. Main handle: <handle>. <summary>`. Tell the user which windows opened and the first-launch approvals they must accept there.
+
+Tell the user which windows opened (or, when none could be opened, print all the briefs), then wait for "bắt đầu".
 
 **Readiness.** Each worker, once joined, writes `ready` in its session file and pings main. `ListAgents` may not list worker sessions even though messages flow: record each worker's **address** — the `from` attribute of its first message, or its bus handle with a pool — in the board's Tasks table, and send to that address. Main keeps a running list for the user: `Ready: T-2 designsystem, T-3 playback · Waiting: T-4 media-library`.
 
@@ -217,6 +221,7 @@ The file is the record; the message is a ping.
 
 - **Worker → main:** send to the `main session` name in `board.md`.
 - **Main → worker:** send to the worker's address recorded on the board (the `from` of its messages). `ListAgents` may not list workers; when it does, it confirms they are alive. A worker that restarts gets a new address — take it from its next `ready`.
+- **Dead worker** (send fails with `ENOENT` / stale socket, its process is gone, or its session file is silent past two heartbeats while `in-progress`): check its worktree (`git -C <worktree> status`, `log origin/main..`), then reopen its window with the same command and the join summary prefixed `RESUME after the previous session ended: read your session log + task Answers, check git status/diff, build green, commit + push, then continue`. Record the new address from its next message (on Linux the socket's pid is the session's process: `ps -o args= -p <pid>` names it). Note it in the board's Resume note.
 - All sessions run in the same permission mode (the brief's `--permission-mode`); otherwise each message waits for the user's approval on the receiving side.
 - **Pool run:** every ping goes over agentbus (`$BUS send claude <handle> "<text>"`), same text, per `cross-agent.md` — never `SendMessage` for some workers and the bus for others.
 
