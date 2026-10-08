@@ -108,6 +108,8 @@ Keep `Received` current **before** starting long work (mark `in-progress` first)
 
 Resuming an `in-progress` item means the last turn may have stopped mid-edit. Before continuing it: inspect the working tree (`git status` / `git diff`, or the files the item touches), build every source set, and finish or repair the half-done change. Never commit until that build is green.
 
+**Pause and auto-resume** — follow `~/.claude/skills/_shared/usage-limit-protocol.md`: append progress to the outbox `Received` row at each step boundary (append-only, 2–4 lines); when the user says the limit is close, park the current step and send the peer `NOTE · pausing until HH:MM`; with the reset time known (from `~/.claude/usage-latest-<K|D>.json` or the user — never guess), schedule a one-shot `CronCreate` at reset + 5 min (13:30 → 13:35) with the protocol's `[resume]` prompt.
+
 ## Hard limits (still apply while ACTIVE)
 
 - No commit or push outside ACTIVE, no force-push ever.

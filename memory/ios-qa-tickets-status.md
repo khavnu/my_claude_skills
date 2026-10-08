@@ -16,7 +16,7 @@ Fixed and committed on `fixbugs`:
 - #42: core-splashscreen on all APIs; the splash is held until the first screen.
 - #77: Home hides defaults while loading, and the splash waits for Home's first state.
 - #58: an invisible longest-quote bubble reserves the tip height (done in HomeHeader; the user wanted QuoteBubble untouched).
-- #87: the fl oz custom-cup field takes one decimal (every 0.1..100.0 entry round-trips through whole ml).
+- #87: SUPERSEDED 2026-10-07 by Android ticket #16 (user decision): fl oz labels AND the custom-cup field now take two decimals (`FL_OZ_LABEL_DECIMALS` in `domain/model/Volume.kt`); cups stay whole ml, so e.g. 8.26 saves as 244 ml and reads 8.25 (off ≤ 0.01, accepted). Was: one decimal, exact round-trip.
 
 Deferred by the user:
 - #72: clock set back hides later days in History. Keep as is "until requested"; option 2, extending History to the latest day that has data, was explained.

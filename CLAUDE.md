@@ -369,6 +369,19 @@ Khi nhận yêu cầu viết plan, tự chọn skill phù hợp — không hỏi
 
 **Announce format:** *"Using `[skill]` vì [lý do 1 câu]"* — sau đó thực thi luôn.
 
+## Execution Mode Selection
+
+Chọn cách chạy việc (khác với chọn skill viết plan ở trên):
+
+| Tình huống | Cách chạy |
+|---|---|
+| Fix / feature nhỏ, xong trong 1 session | Làm trực tiếp, hoặc 1 subagent |
+| Feature dài, nặng, có target hiệu suất/RAM/thời gian | `long-feature` |
+| Nhiều việc độc lập chạy song song | `orchestra` (worker tự dùng `long-feature` khi task đòi hỏi) |
+| Trao đổi với project / session khác (vd lib) | `collab` |
+
+Usage limit: mặc định chạy hết tốc độ, tự apply; chỉ khi user nhắc "chú ý limit" mới áp ngưỡng — xem `~/.claude/skills/_shared/usage-limit-protocol.md` §0.
+
 ---
 
 ## Design Phase Checklist (trước khi viết plan)

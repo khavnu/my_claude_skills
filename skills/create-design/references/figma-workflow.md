@@ -49,6 +49,10 @@ file structure and the traps that cost real retries.
 | Spacer made with an empty `createAutoLayout()` adds a 100px gap | An auto-layout frame with no children keeps its 100×100 default | Use `itemSpacing`/padding, or a plain frame `resize(1, N)` |
 | `getStyleByIdAsync(id)` returns null | Style ids read via `node.fillStyleId` / style lists end in a trailing `,` (`S:abc…,`) | Look styles up by name from `getLocal*StylesAsync()` |
 | `remove: node … does not exist` while removing instances | `findAll(INSTANCE)` also returns instances nested inside the ones you remove first | Remove only `children.filter(...)`, never a deep `findAll` result |
+| Uploaded PNG/JPG looks cropped or tiny (2026-10-05) | `upload_assets` without `nodeIds` places every raster in a 200×150 frame (scaleMode FILL), not at the image's size | After upload: `const sz=await figma.getImageByHash(fill.imageHash).getSizeAsync(); n.resize(sz.width/density, sz.height/density)` (xxhdpi ÷3, xhdpi ÷2, device capture ÷2.625) |
+| Resized instance of an SVG-imported component shows its art tiny/clipped | `instance.resize()` keeps child constraints, the vector tree does not scale | `instance.rescale(target/instance.width)` for illustrations; `resize` only for image-fill frames |
+| New vector/wave shape has a black outline | `figma.createVector()` comes with a default 1 px black stroke | Set `v.strokes=[]` right after creating |
+| Android template icons (white bitmaps tinted in code) invisible on white | The PNG is white; Compose tints it | Frame 20×20 → icon instance `isMask=true` → rectangle bound to the colour token above it |
 | Screenshot URL returns a 74-byte 404 JSON | `get_screenshot` URLs had expired by the time curl ran (2026-10-01) | Download right after the call, or judge from `node.screenshot()` inline |
 
 ## Realistic images (covers, avatars, photos)

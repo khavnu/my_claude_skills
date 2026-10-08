@@ -18,3 +18,5 @@ metadata:
 - If a parallel task is mid-edit in the same tree, commit a snapshot without touching the tree: `git add -A -- . ':!.idea'`, then `git write-tree` (save the sha), and later `git commit-tree <tree> -p HEAD -m ...` followed by `git update-ref HEAD <commit>`.
 - New Gradle module: add its `/build` `.gitignore` before the first add. 450+ build files slipped in once.
 - A parallel design session commits docs in this repo. Leave its commits out of review ranges, and never rewrite them after a push.
+- **Shared checkout (verified 2026-10-05):** the user runs a second WMusi design session (`wmusi-*`, Figma/spec work) in the SAME `WMusi` folder. Its `git commit -am` swept my agents' in-progress code into 5 commits (c346139, 1bab1e5, c507e1f, 5966f01, b17b279), and b17b279 was pushed while `:app` did not compile. It has agreed to stage explicit paths only. On my side: keep commits path-scoped, check `git log -5` for foreign commits before pushing, and fix main if a sweep lands red.
+

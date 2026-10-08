@@ -43,6 +43,15 @@
             "statusMessage": "Loading git context..."
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/usage-on-start.sh",
+            "statusMessage": "Reading usage limits..."
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -77,5 +86,9 @@
   "tui": "default",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
-  "remoteControlAtStartup": false
+  "remoteControlAtStartup": false,
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  }
 }

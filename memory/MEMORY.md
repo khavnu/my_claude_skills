@@ -24,4 +24,11 @@
 - [Whisper JNI device traps](project_whisper_jni_device_traps.md) — số CLI không chuyển sang app (2 luồng), -mc 0=n_max_text_ctx, test APK targetSdk→cpuset, connectedAndroidTest xoá fixture, nhiệt: xen kẽ + <45°C, scratchpad mất khi reboot; Realme ColorOS ẩn logcat app → ghi log ra file, nhận dạng 3.4× thời lượng
 - [Lyrics open items](project_lyrics_open_items.md) — feature xong 2026-09-30; còn mở: A20s chưa đo, Silero tụt giữa câu hát ngân (min_silence 2000 đã thử, loại), filter có thể bỏ rap nhanh; UI Streaming đã có; 30 vs 36 dòng đã giải quyết
 - [Lyrics sources](project_lyrics_sources.md) — embedded/file/LRCLIB/Whisper + verifier; corpus NGOÀI repo ở lyrics-corpus/, lệnh chạy lại; bẫy: whisper-cli thiếu fix VadSpeechCut, LRCLIB q không tìm theo lời
-- [CombinedPlayer device test](project_combined_player_device_test.md) — bundled không lưu được; variant reset khi vào lại màn; quảng cáo đè Realme; pgrep -f tự khớp shell (exit 144); Realme ẩn log Timber; độ dài metadata ≠ decode
+- [CombinedPlayer device test](project_combined_player_device_test.md) — bundled không lưu được; variant reset khi vào lại màn; quảng cáo đè Realme; pgrep -f tự khớp shell; nhiệt thermalservice là cache (dùng battery); log app xoay mỗi lần khởi động
+- [Realme decode speed](project_realme_decode_speed.md) — decode mp3 chỉ 3–5× realtime trên Realme; đừng thiết kế 'decode lại nguồn' rẻ; giữ PCM; pipeline/LUT đã thử, không lợi
+- [Lyrics speed next](project_lyrics_speed_next.md) — việc kế tiếp sau stream-resume; ý tưởng + số đo ở docs/features/lyrics-speed/ideas.md; Q4 đã được gỡ; bắt đầu bằng checklist long-feature
+- [Device measurement confounds](project_device_measurement_confounds.md) — dumpsys meminfo mỗi 15 s gây giật phát 0,1 s: đo RAM và đo giật phải tách lượt; dò nghẽn lyrics bằng log 'fed until (read/whisper/aligner)'
+- [Realme CPU saturated](project_realme_cpu_saturated.md) — Helio G88 2 lõi lớn: thêm luồng/cửa sổ nhỏ chỉ cướp CPU của tách (K11, R5 thua); chỉ GIẢM việc mới thắng
+- [Lyrics device run recipe](project_lyrics_device_run_recipe.md) — b_runs.sh + TEMP manual-lyrics hook + RAM riêng lượt; A/B corpus thì chạy báo cáo trên bản backup, đừng so file report cũ
+- [Open singing datasets](reference_open_singing_datasets.md) — de/en JamendoLyrics, ru MulJam, ja PJS, pt Commons; da/ro/fi/tr/hi gần như không có bản hát mở
+- [Jamendo client_id pending](project_jamendo_client_id_pending.md) — user sẽ tạo client_id Jamendo rồi báo; dùng qua biến môi trường, không lưu giá trị; CC-NC dataset đã được duyệt cho test

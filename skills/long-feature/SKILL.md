@@ -64,6 +64,17 @@ Quy trình cho feature khó và dài. Khác quy trình thường (chờ user tes
 
 Không bao giờ tự commit hoặc push (Workflow Rule 6 vẫn áp dụng).
 
+### Hết usage limit giữa chừng
+Theo `~/.claude/skills/_shared/usage-limit-protocol.md`:
+- **Ghi tiến độ:** mỗi mốc bước (một mục tick, build xanh, một quyết định) nối thêm 2–4 dòng vào mục
+  **Điểm dừng** cuối checklist — đang ở mục nào, bằng chứng tới đâu, file nào đang sửa dở, agent con nào
+  đang chạy (kèm đường dẫn report). Chỉ nối thêm, không viết lại cả file, không đọc lại khi đang làm.
+- **Tạm dừng** (user báo sắp hết limit, hoặc thấy thông báo limit): không mở hạng mục / agent mới,
+  dừng gọn bước hiện tại, cập nhật Điểm dừng.
+- **Tự chạy lại:** biết giờ reset (đọc `~/.claude/usage-latest-<K|D>.json` hoặc user báo; không đoán) → `CronCreate` một lần lúc reset + 5 phút
+  (reset 13:30 → 13:35) với prompt `[resume] …` trong protocol. Tiếp tục = đọc Điểm dừng, `git status`/`git diff`,
+  build xanh, agent con đã chết thì giao agent mới làm tiếp phần dở.
+
 ### Phase 4 — Hoàn thiện
 - Mọi mục đã tick và có bằng chứng, hoặc được user cho phép hoãn (ghi rõ lý do).
 - Chạy lại toàn bộ test liên quan và đo lại các target nâng cao lần cuối trên build cuối.
@@ -101,4 +112,7 @@ Trạng thái: Phase <n> · Cập nhật: <YYYY-MM-DD>
 
 ## Hoãn có chủ đích
 - <mục> — <lý do> — <user đồng ý ngày>
+
+## Điểm dừng
+<!-- nối thêm 2–4 dòng mỗi mốc bước: mục đang làm, bằng chứng, file sửa dở, agent con + report -->
 ```

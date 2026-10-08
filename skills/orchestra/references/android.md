@@ -12,6 +12,7 @@
 ## Devices
 - `connectedAndroidTest` uninstalls the app under test: two sessions on one phone wipe each other's runs and data.
 - Main assigns each device to at most one task (board `devices`, task file `device`). A worker always sets `ANDROID_SERIAL=<its serial>`; without an assigned device it runs no instrumented tests and asks main for one (`question`).
+- Every device command goes through that device's lock: `flock /tmp/<project>-<device>.lock env ANDROID_SERIAL=<serial> …`. Main never runs `connectedAndroidTest` on a device a worker holds; if it must test there, it uses `am instrument` against the already-installed APKs, inside the lock.
 - Workers force-stop the app after each run and say in their log when they release a device.
 
 ## Shared groundwork main usually does itself

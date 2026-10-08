@@ -19,3 +19,5 @@ metadata:
 - Separation: STREAM 2-stem QUANTIZE only (38 MB) to start.
 - Lyrics: embedded (`lyrics:core`) + LRCLIB online (`lyrics:online`) only. No whisper or wav2vec2 yet.
 - 4/5-stem, recognition and alignment come later.
+
+**PAUSED (user, 2026-10-05):** "Không cần hỏi lib nhé, tạm thời chúng ta chưa làm Karaoke vội". Do not send the lib any REQ, including the AGP/Kotlin toolchain alignment for the composite build that was never sent. Do not start `:sing:engine`. Collab may still deliver lib handoffs: record them, but ask the lib for nothing until the user resumes Karaoke.

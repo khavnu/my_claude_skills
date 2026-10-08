@@ -79,7 +79,7 @@ After approval (ACTIVE):
 
 ## Main — ACTIVE
 
-**Start:** add `.claude/orchestra/` to `.git/info/exclude`, call `ListAgents` and read this session's own name from its first line ("This session is <name>"), write `board.md` with that name as `main session` (workers message main by it), note this session's permission mode as `permission mode` (from the system prompt; ask the user if unsure), schedule the heartbeat.
+**Start:** add `.claude/orchestra/` to `.git/info/exclude`, call `ListAgents` and read this session's own name from its first line ("This session is <name>"), write `board.md` with that name as `main session` (workers message main by it), note this session's permission mode as `permission mode` (from the system prompt; ask the user if unsure). Schedule the heartbeat only once a worker is live (see Heartbeat).
 
 **Model per task.** Pick each worker's model by the task's difficulty and write it on the board:
 - **opus** — concurrency, service/playback lifecycle, IO and codecs, cancellation, anything a fix round would be expensive to redo;
@@ -187,7 +187,7 @@ Then build and test `main` per `CLAUDE.md`. Broken → fix it on `main` (or `git
 ## Worker — `/orchestra join T-<n> <name> <worktree> [— summary]`
 
 1. **READY:** the join line carries the worktree path (`/orchestra join T-<n> <name> <worktree> — summary`). If this session was opened somewhere else, work there by absolute path: every git command as `git -C <worktree>`, every file by its absolute path, every build/test run as `cd <worktree> && …` in the same command (the shell's cwd resets between calls), and read `<worktree>/CLAUDE.md` yourself since it was not loaded. Locate main (`git -C <worktree> worktree list`, first row), read `board.md` and `tasks/T-<n>-<name>.md`. Check the worktree is on `feature/<name>` and the copied build files are there. Anything wrong → tell the user and main, do not report ready. The session name is cosmetic — messaging does not depend on it; if it is not `feature-<name>`, suggest the user type `/rename feature-<name>`.
-2. Create `sessions/T-<n>-<name>.md` with `ready` and a one-line understanding of the task, ping main `ready` at the `main session` name from the board, schedule the heartbeat, tell the user you are waiting for main's start.
+2. Create `sessions/T-<n>-<name>.md` with `ready` and a one-line understanding of the task, ping main `ready` at the `main session` name from the board, schedule the heartbeat unless main or the user switched it off, tell the user you are waiting for main's start.
    **READY is read-only for the code:** no edits, no new files, no commits in the worktree — not even a "quick" start. Your turn ends after the ping; the next thing you do comes from `start`.
 3. On `start`: set `in-progress`. Push the branch at once (`git push -u origin feature/<name>`) so main can see it from the first minute. Work only inside the task's scope. Something outside it is needed → ask main (`question`) and continue with what you can. Follow the project's `CLAUDE.md` in full.
    - Build on primitive or internal types. When another layer needs what you build, write a **contract proposal** and ping main `contract-proposal` (see **Contracts**); never edit the shared model/contract module yourself. Keep working while main decides.
@@ -200,6 +200,8 @@ Then build and test `main` per `CLAUDE.md`. Broken → fix it on `main` (or `git
    - ping main.
 7. On `changes-requested`: fix each numbered finding, note per finding what changed, push, request review again.
 8. On `merged`: write a final line, tell the user this CLI can be closed, delete your heartbeat.
+**Other skills inside a worker:** a task that is long or heavy (performance targets, multi-session) may run as `/long-feature` inside the worker; its checklist goes to main as a `question` and waits for main's OK before code. A worker never opens `/collab` with another project or session: anything outside goes through main, unless main hands it one specific request to carry.
+**Hygiene:** stage only your task's paths (never `add -A` / `commit -a`) and check `git diff --cached --stat` before each commit. A subagent that has written no file in ~1 h is stalled: stop it and re-dispatch a new one on the work in the tree.
 9. On `main stopping`: finish or cleanly pause the current step, commit and push what builds (work that does not build stays uncommitted and is described in the log), write where you stopped and what is left in your session file, delete your heartbeat, and tell the user. A later `/orchestra join` with the same task resumes from that log.
 
 Never rebase a pushed branch and never force-push — integrate `main` by merging it in. Never merge into or push `main`.
@@ -217,17 +219,24 @@ The file is the record; the message is a ping.
 If this session is running /orchestra, act on it per your phase; otherwise tell your user.
 ```
 
-Events — worker → main: `ready`, `question`, `contract-proposal`, `blocked`, `review-requested`. Main → worker: `start`, `answer`, `changes-requested`, `merged`, `main updated`, `main stopping`. No live recipient → the item waits in the file and is picked up by the heartbeat.
+Events — worker → main: `ready`, `question`, `contract-proposal`, `blocked`, `review-requested`. Main → worker: `start`, `answer`, `changes-requested`, `merged`, `main updated`, `main pausing` (usage limit; see Heartbeat › Usage limit), `main stopping`. No live recipient → the item waits in the file and is picked up by the heartbeat.
 
 ## Heartbeat
 
-On entering ACTIVE, every session schedules a recurring session-only `CronCreate` at off-minutes (main `5,25,45 * * * *`, workers `15,35,55 * * * *`):
+Off by default. Main turns it on only while at least one worker or peer session is live, and deletes it when the last one is merged, stopped or paused; the user may also switch it off and say when sessions open. While on, every session schedules a recurring session-only `CronCreate` at off-minutes (main `5,25,45 * * * *`, workers `15,35,55 * * * *`):
 
 ```
 [orchestra heartbeat] If /orchestra is ACTIVE: re-read my state files, resume anything in-progress, act on new events. Nothing open → one line and stop.
 ```
 
 Resuming after a cut-off turn: check `git status`/`git diff` first, finish or repair the half-done change, build green before any commit. `CronDelete` it on stop.
+
+### Usage limit — progress log, pause, auto-resume
+
+Follow `~/.claude/skills/_shared/usage-limit-protocol.md`. In orchestra terms:
+- **Progress:** workers append 2–4 lines to their session file at each step boundary and push every green step; main keeps a `## Resume note` on the board (running subagents + report paths, next steps, open questions). Subagent briefs say "append progress to the report after each step".
+- **Pause** (user reports the limit is close, or a limit message shows): main starts no new wave or agent, sends `[orchestra] main pausing` to every worker (they park their step, push what builds, log where they stopped), updates the resume note.
+- **Auto-resume:** with the reset time known (from `~/.claude/usage-latest-<K|D>.json`, injected at session start, or the user; never guess), main and each worker schedule a one-shot `CronCreate` at reset + 5 min (reset 13:30 → 13:35) with `[resume] Usage limit has reset…` from the protocol. Resume = protocol §4; dead subagents are re-dispatched as new agents on the uncommitted work.
 
 ## Hard limits
 

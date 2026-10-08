@@ -1,6 +1,6 @@
 ---
 name: project-combined-player-device-test
-description: Kiểm CombinedStemPlayer/StemStore trên máy — bài bundled không bao giờ được lưu; variant reset khi vào lại; quảng cáo đè trên Realme; pgrep -f tự khớp shell; run-as sh -c không expand glob
+description: Kiểm CombinedStemPlayer/StemStore trên máy — bài bundled không bao giờ được lưu; variant reset khi vào lại; quảng cáo đè trên Realme; pgrep -f tự khớp shell; run-as sh -c không expand glob; nhiệt thermalservice là cache; log app xoay mỗi lần khởi động
 metadata:
   node_type: memory
   type: project
@@ -19,4 +19,5 @@ CombinedStemPlayer + CompletedStemsStore xong 2026-10-02 (plan `docs/superpowers
 - **Màn Streaming reset variant về 2-Stem Quantized mỗi lần vào lại** → thử "mở lại ra Files" phải chọn lại đúng variant đã lưu, nếu không sẽ tưởng find() hỏng (dính 2026-10-02, kiểm bằng screenshot hàng nút variant).
 - **Realme: quảng cáo full-screen của app khác (`net.uploss.water_app`, AppLovin) đè lên giữa chừng** → tap rơi vào quảng cáo. Trước mỗi chuỗi tap: `dumpsys window | grep mCurrentFocus` phải là app mình.
 - **`pgrep -f <tên script>` / `pkill -f` khớp luôn chính shell đang chạy lệnh đó → exit 144** (dính lần 3). Kill theo PID đã ghi lúc khởi chạy, hoặc pattern không xuất hiện trong dòng lệnh hiện tại.
+- (2026-10-05) Thêm bẫy Realme khi đo: `dumpsys thermalservice` trả nhiệt CPU CACHE (đứng 66,1 °C nhiều phút) → dùng `dumpsys battery | grep temperature`; dòng file cuối của SAF picker nằm trên thanh cử chỉ → tap về launcher, cuộn danh sách trước; picker mở dở quay lại cùng task sau force-stop (BACK rồi `am start` lại); popup báo thức/quảng cáo `water` → BACK; toybox grep KHÔNG hiểu `\|` (tưởng thiếu log). Log app debug ra file: `FileLogTree` → `files/logs/app.log`, XOAY MỖI LẦN KHỞI ĐỘNG (script đếm dòng log từ lần trước sẽ không bao giờ khớp). Driver: scratchpad `realme_ui.py`, `n12.py`, `n4_kill.py`, `wav_check.sh` (mất khi reboot).
 - Đo dung lượng đỉnh: script `du -sk` mỗi 2 s trên `Android/data/<pkg>/files/stem_splitter/stream` + `run-as du -sk no_backup` (đỉnh 4 stem 4:39: 625 MB cách cũ, 254 MB với StemStore AAC — số ở public_api.md).
