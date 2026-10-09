@@ -19,3 +19,5 @@ Design-session asks are listed at the bottom of docs/design/audit-2026-10-07-dec
 **How to apply:** start from item 1; re-check git log first — items may already be done.
 
 **2026-10-08 13:xx:** Undo queue-slot DONE — cd92156 + review fixes cec5dd0 pushed (3 Important + minors; WMusiPlayerTest compiled, not run on device). Next: orchestra wave 1 (T-3 qa-playback, T-4 qa-ux) once the user says to open sessions.
+
+**2026-10-09:** orchestra wave 1 (common_bugs QA A–I) DONE and merged: T-3 2bcffae, T-4 ea36227 / 670eb51 / b92e822; reviews in docs/reviews/T-3-*, T-4-*. Follow-ups done on main: focus-flag owner 5e81c51, queue feedback bda8533, H7.2 0cd83f7, H9.4 787430c. Still open: landscape Now Playing from Figma page 8 (big feature, needs the user's go), real-device checks (VoIP ring detection A7.5, Bluetooth/AirPods, calls), the older open questions above (queued song deleted when last, Delete album semantics, Theme Image photos, Huawei pending-config, Home tip floating).

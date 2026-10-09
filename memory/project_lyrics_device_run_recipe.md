@@ -28,3 +28,7 @@ metadata:
    which always turns airplane mode back off). Keep new device scripts THERE, not in the scratchpad.
 8. **The Pixel 9 is the user's own phone**: notifications/heads-ups steal taps (`cmd statusbar collapse` before each tap);
    never `pkill -f` a pattern that is in the same command line (it kills the shell — airplane mode stayed ON once).
+9. **"lyrics: final" is not always THE final** (2026-10-08): a run whose final check fails logs `final … chose text=Whisper
+   → 0 line(s)` then `run mode <fallback>` and runs again (hidden from the UI via `transcriptionIncomplete`). px_run.sh /
+   ab_nemo.sh stop at the FIRST final, so a fallback run is not measured — check for a second `run mode` line before
+   reporting a time (wav2vec2 en hit this in the NeMo A/B, runs/ab/ab_en_*_w2v2_*.log).

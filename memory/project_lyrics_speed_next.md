@@ -34,3 +34,6 @@ Danh sách ngôn ngữ tiếp theo (đợt A–D) đã ghi ở checklist K7, m�
 Việc mai thêm (user 2026-10-07): (1) bổ sung API docs về nguồn lời (LyricsSource đủ 5 giá trị gồm Manual, StreamLyrics.source,
 StoredLyrics giữ nguồn) — user muốn app biết lời lấy từ đâu; (2) chú ý trường hợp KHÔNG có internet: vẫn dùng nguồn có sẵn
 (embedded/file/manual) để AI xác minh + map thời gian; kiểm bằng chế độ máy bay trên máy. Ghi ở checklist K7 "VIỆC MAI".
+2026-10-08: đợt A (kn, pa, as) xong; đợt B NeMo TÍCH HỢP xong (10 ngôn ngữ, thay wav2vec2 de/en/ru, 28 ngôn ngữ, Pixel A/B
+nhanh hơn rõ) — checklist K7 "ĐỢT B TÍCH HỢP". Còn: đo Realme (chưa cắm), xoá module tạm :lyrics:nemo_bench khi xong.
+User 2026-10-08: "có đề xuất, ý tưởng gì thì cứ triển khai, không cần tôi confirm" — mục tiêu nhận lời nhanh nhất, chính xác nhất.
