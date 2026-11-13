@@ -32,3 +32,14 @@ metadata:
    → 0 line(s)` then `run mode <fallback>` and runs again (hidden from the UI via `transcriptionIncomplete`). px_run.sh /
    ab_nemo.sh stop at the FIRST final, so a fallback run is not measured — check for a second `run mode` line before
    reporting a time (wav2vec2 en hit this in the NeMo A/B, runs/ab/ab_en_*_w2v2_*.log).
+10. **2026-10-19 — Pixel đã đổi sang TIẾNG VIỆT**: picker là "Hiển thị gốc" / "Tệp đã tải xuống" / "Chế độ xem danh sách".
+    `pixel_ui.pick` giờ nhận cả 2 thứ tiếng (`ROOTS`/`DOWNLOADS`/`LIST_VIEW`). Lỗi "picker: Downloads root not reachable"
+    = nhãn ngôn ngữ, không phải bug app. `monkey -p … LAUNCHER` có lúc để launcher ở trên → dùng `am start -n <pkg>/.MainActivity`.
+11. **Bản "trước" cho A/B khi checkpoint backup đã cũ**: kéo APK đang cài trên máy (`pm path` → `adb pull …/base.apk`,
+    ~1,2 GB), kiểm `find -newermt <lastUpdateTime>` xem code sau đó đổi gì; cài qua lại bằng `install -r -d -t`
+    (`-t`: APK cài từ Studio là test-only; `-r` giữ data → checkpoint của bản này resume ở bản kia).
+12. **Không bao giờ sửa file .sh đang chạy**: bash đọc script dần theo offset → sửa giữa chừng làm nó chạy lại cả một vòng
+    và ghi đè log (2026-10-19). Chờ tiến trình: `pgrep -f "ten[.]sh"` (ngoặc để không tự khớp dòng lệnh của chính vòng chờ).
+13. Kịch bản đo 2026-10-19 ở `lyrics-corpus/tools/device/`: `ab_pipeline.sh` (A/B, `OUT`/`ORDER`/`ROUNDS`/`SONGS`, chờ file
+    lời cuối thay vì dòng "lyrics: final" — tránh bẫy #9), `ab_offline.sh`, `resume_ab.sh` (resume chéo build), `ram_ab.sh`.
+

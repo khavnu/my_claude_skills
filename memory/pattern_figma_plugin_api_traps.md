@@ -1,11 +1,11 @@
 ---
 name: pattern-figma-plugin-api-traps
-description: "use_figma traps that cost retries while building the karaoke design system — bound paint renders black in instances, resize() kills hug, nested rescale throws"
+description: "use_figma traps that cost retries: bound paint renders black in instances, resize() kills hug, nested rescale throws, instance resize doesn't reflow children (detach + SCALE), SECTION children use local coordinates"
 metadata:
   node_type: memory
   type: feedback
   originSessionId: e3b246ca-7bf8-422f-be96-0174aa57b767
-  modified: 2026-09-29T10:52:07.199Z
+  modified: 2026-10-13T03:41:34.915Z
 ---
 
 Traps hit on 2026-09-29 building components in Figma file my_idea (see [[project-karaoke-app-design]]):
@@ -20,6 +20,8 @@ Traps hit on 2026-09-29 building components in Figma file my_idea (see [[project
 9. **`setEffectStyleIdAsync('')` detaches but keeps the raw effect** — also set `effects = []` to actually remove glow.
 10. **Property-linked text inside an instance ignores `characters =`** (silently) — change it via `instance.setProperties({[key]: value})`.
 11. **Widening a sibling inside a slider shrinks the auto-layout track** → fixed-width fill rects overflow at 100%; recompute fills from `track.width` after any width change.
+12. (2026-10-13, music editor landscape file) **Resizing an instance doesn't reflow its children** if the component's constraints are fixed. A waveform instance going from 360×200 to 448×120 got its bars cut off and its sections misplaced. To stretch something non-uniformly at 1.0, `detachInstance()`, then set `constraints = {SCALE, SCALE}` on every descendant that isn't inside a nested INSTANCE or BOOLEAN_OPERATION (setting it there throws "cannot be overridden in an instance"), then `resize`. Afterwards, restore the round handles: record the square nodes before the resize and set them back to their original size, centred where they were.
+13. (2026-10-13) **Children of a SECTION use LOCAL coordinates**, the same as children of a FRAME. Assuming absolute coordinates pushed 24 of 37 frames outside their sections. Always verify with `absoluteBoundingBox`.
 5. **Karaoke wipe via hard-stop text gradient only works on single-line text** — gradient spans the whole box, so wrapped lines all cut at the same x.
 
 **Why:** each cost a failed call + screenshot round-trip.

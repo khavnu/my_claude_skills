@@ -65,6 +65,15 @@ structure, one bold idea per feature where it matters.
    shows an image (songs, albums, users, products, shops, places…) and give
    **each one its own fallback** (glyph, initials, shape) so types stay
    distinguishable. Never reuse one generic placeholder for all of them.
+3b. **Size from constraints, not by eye.** Before picking any width, height or
+   icon size, write its envelope: smallest and largest window it must work in
+   (phone portrait and landscape, tablet both ways, an unfolded Fold ~841×673dp,
+   split screen), the longest content (largest count, longest duration or
+   language, font scale 1.3), and what may share the space (banner, mini player,
+   keyboard). Derive the number from that envelope (a share of the window with a
+   floor and a cap beats a fixed dp), and say which constraint sets it. A frame
+   the design does not cover (Figma has only the portrait phone) gets the same
+   treatment: never extrapolate a portrait number to landscape or tablet.
 4. **Screens** from components, named `<page>.<group>.<n>`, grouped by feature.
    **The signature moment gets motion, not prose:** at least one animated frame
    (load `figma:figma-use-motion`) or a keyframe strip (start · peak · end, with
@@ -92,6 +101,7 @@ One table per screen. Each row: a **measured value + how it was measured**.
 | 5 | Consistency & tokens | Every color bound to a semantic role (no raw hex, no primitive); each role used only with its pair; on-scale sizes; same-row controls share height+radius; nested radius = outer − padding | |
 | 6 | States | Empty, loading, error, permission/offline, long text, each toggle state; every image slot with image **and** without, a fallback for each entity type | |
 | 7 | Conditions of use | The brief's condition checked numerically (legible at distance, thumb reach…) | |
+| 7b | Size envelope | Every size the edit chose holds at both ends of its envelope (step 3b): smallest window, largest window, longest content at font scale 1.3, with and without banner/mini player — measured, or pinned by a test that fails when it no longer fits | |
 | 8 | Distinctiveness (expressive screens only) | Place the screen next to the same screen from 3 top competitors with logos and names hidden. List the elements only this app has (signature moment, shape, metaphor, motion). ≥1 = pass, 0 = fail. Structural screens: write "n/a, structural" | |
 
 **Full gate vs. delta gate.** A *new* or *redesigned* screen gets all rows. An
@@ -136,5 +146,6 @@ or state exactly which input is missing.
 | Only the main entity type got a no-image fallback; the others show blank or borrow its placeholder | A no-image variant for every entity type that shows an image, placed next to its with-image case |
 | Expressive screen designed from "what's most popular" alone → the market average | Floor + ceiling research, a signature moment, 3 thumbnails (Safe / Stretch / Bold) before detail |
 | Creativity spent on a structural screen (a "fun" sort sheet, a clever settings list) | Structural = convention. Spend the novelty budget on the signature moment |
+| A size tuned by eye over several rounds (440 → 480 → 500dp), then off on the next device | Write the envelope first (step 3b); the number follows from it, and a fit test keeps it |
 | Signature moment handed off as a sentence ("pulses with the beat") | Motion frame or keyframe strip with timings |
 | Bold idea shipped without its fallback (reduced motion, disabled state, small screen, other theme modes) | The creative layer passes the same gate as everything else (`creative.md` › Guardrails) |

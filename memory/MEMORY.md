@@ -18,7 +18,7 @@
 - [Model rework 2026-09](project_model_rework_2026-09.md) — cả 6 tier: average-mask + bỏ 1 output (suy bằng phép trừ) + chunk 524.288; quantize=float16; dùng ALL_STEM_KEYS không dùng OUTPUT_TENSORS
 - [adb lái SAF picker](project_adb_saf_picker.md) — picker LÁI ĐƯỢC (comment BundledTrack nói ngược là sai); tap node clickable bao ngoài, List view, root Downloads
 - [Lyrics recognition](project_lyrics_recognition.md) — spike 2026-09-29 → module `:lyrics:core`+`:lyrics:whisper` xong 2026-09-30; mọi số đo ở docs/features/lyrics/checklist.md
-- [A/B trên máy & dòng đối chứng](project_device_ab_control_line.md) — so 2 build phải cùng phiên; `invoke` là đối chứng vì DSP không đụng tới nó; lệch >5% thì vứt phép đo
+- [A/B trên máy & dòng đối chứng](project_device_ab_control_line.md) — so 2 build phải cùng phiên; `invoke` là đối chứng vì DSP không đụng tới nó; lệch >5% thì vứt phép đo; thứ tự cố định cũng tạo regression giả → đảo thứ tự
 - [Tiny model thread overhead](project_tiny_model_thread_overhead.md) — Silero VAD trên Pixel 9: 4 luồng 82s, 1 luồng 0.74s; desktop không lộ; đo riêng từng stage với 1 luồng trước khi đòi thay
 - [Figma page listing](reference_figma_page_listing.md) — get_metadata không nodeId chỉ trả page đầu; dùng use_figma figma.root.children để thấy đủ page (file Karaoke Player có 6)
 - [Whisper JNI device traps](project_whisper_jni_device_traps.md) — số CLI không chuyển sang app (2 luồng), -mc 0=n_max_text_ctx, test APK targetSdk→cpuset, connectedAndroidTest xoá fixture, nhiệt: xen kẽ + <45°C, scratchpad mất khi reboot; Realme ColorOS ẩn logcat app → ghi log ra file, nhận dạng 3.4× thời lượng
@@ -29,6 +29,8 @@
 - [Lyrics speed next](project_lyrics_speed_next.md) — việc kế tiếp sau stream-resume; ý tưởng + số đo ở docs/features/lyrics-speed/ideas.md; Q4 đã được gỡ; bắt đầu bằng checklist long-feature
 - [Device measurement confounds](project_device_measurement_confounds.md) — dumpsys meminfo mỗi 15 s gây giật phát 0,1 s: đo RAM và đo giật phải tách lượt; dò nghẽn lyrics bằng log 'fed until (read/whisper/aligner)'
 - [Realme CPU saturated](project_realme_cpu_saturated.md) — Helio G88 2 lõi lớn: thêm luồng/cửa sổ nhỏ chỉ cướp CPU của tách (K11, R5 thua); chỉ GIẢM việc mới thắng
-- [Lyrics device run recipe](project_lyrics_device_run_recipe.md) — script lái máy ở lyrics-corpus/tools/device (scratchpad mất khi reboot); Pixel là máy của user; RAM riêng lượt; A/B corpus chạy trên bản backup
+- [Lyrics device run recipe](project_lyrics_device_run_recipe.md) — script lái máy ở lyrics-corpus/tools/device (scratchpad mất khi reboot); Pixel là máy của user; RAM riêng lượt; A/B corpus chạy trên bản backup; máy giờ tiếng Việt, đừng sửa .sh đang chạy, bản "trước" = pull APK đang cài
 - [Open singing datasets](reference_open_singing_datasets.md) — de/en JamendoLyrics, ru MulJam, ja PJS, pt Commons; da/ro/fi/tr/hi gần như không có bản hát mở
-- [Jamendo client_id pending](project_jamendo_client_id_pending.md) — user sẽ tạo client_id Jamendo rồi báo; dùng qua biến môi trường, không lưu giá trị; CC-NC dataset đã được duyệt cho test
+- [Jamendo client_id](project_jamendo_client_id_pending.md) — đã nhận 2026-10-09, đọc từ ~/.config/jamendo_client_id, không in giá trị; mặc định chỉ lấy bài CC BY/BY-SA
+- [Fingerprint/lyrics-search license blocked](project_fingerprint_lyrics_license_blocked.md) — AcoustID/MusicBrainz/Genius/Musixmatch đều không có gói miễn phí cho dùng thương mại; đừng đề xuất lại mà không nhắc điều này
+- [STT spike](project_stt_spike.md) — Android SpeechRecognizer vi-VN: trượt 2 cổng chất lượng làm nguồn chính; chạy được 3× realtime (đẩy nhanh hơn → mất chữ im lặng, kể cả VozNote); ĐÃ SHIP 0.3.0/0.3.1 dạng nâng cấp nền đã xác minh (verifyUpgrade); thêm enum nguồn phải thêm vào mọi SOURCE_ORDER

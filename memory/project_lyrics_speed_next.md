@@ -1,8 +1,11 @@
 ---
 name: project-lyrics-speed-next
-description: Next feature after stream-resume (done 2026-10-05) — lyrics speed; ideas + baseline numbers in docs/features/lyrics-speed/ideas.md; Q4 "Whisper always full" is lifted by the user
+description: "Next feature after stream-resume (done 2026-10-05) — lyrics speed; ideas + baseline numbers in docs/features/lyrics-speed/ideas.md; Q4 \"Whisper always full\" is lifted by the user"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: f3d6b4db-0990-4904-8a79-1c1052bbf9b2
+  modified: 2026-10-12T01:18:21.704Z
 ---
 
 User 2026-10-05: goal is fast AND accurate stem split + lyrics; accuracy is now fine, speed is the issue.
@@ -37,3 +40,11 @@ StoredLyrics giữ nguồn) — user muốn app biết lời lấy từ đâu; (
 2026-10-08: đợt A (kn, pa, as) xong; đợt B NeMo TÍCH HỢP xong (10 ngôn ngữ, thay wav2vec2 de/en/ru, 28 ngôn ngữ, Pixel A/B
 nhanh hơn rõ) — checklist K7 "ĐỢT B TÍCH HỢP". Còn: đo Realme (chưa cắm), xoá module tạm :lyrics:nemo_bench khi xong.
 User 2026-10-08: "có đề xuất, ý tưởng gì thì cứ triển khai, không cần tôi confirm" — mục tiêu nhận lời nhanh nhất, chính xác nhất.
+
+2026-10-12: điều tra "bài hỏng nặng" (NeMo p90 > 1s). Nguyên nhân xác định: cầu nhạc dài mà lời tham chiếu không có dòng
+(VAD câm nhiều chục giây) khiến Viterbi lướt qua bằng nhiễu, lệch cả cụm dòng sau đó. **Đã thử và BỎ 2 cách** (gây hại hơn
+lợi, đã gỡ sạch code khỏi `CtcForcedAligner.kt`/`LyricsResolver.kt`, build + 260 test lib xanh sau khi gỡ):
+nội suy lại dòng theo confidence thấp (đè lên dòng đúng nhiều hơn sửa dòng sai); bias Viterbi thiên blank ngoài vùng VAD
+(không đủ mạnh sửa bài mục tiêu dù bonus rất lớn, lại làm hỏng thêm bài khác đang ổn, vd en-multi 8→13/20 bài p90>1s).
+Chi tiết đầy đủ + hướng chưa thử (DP phát hiện điệp khúc lặp) ở checklist.md mục "BÀI HỎNG NẶNG, điều tra". Đừng thử lại
+hai cách trên nguyên dạng — nếu quay lại hướng này, bắt đầu từ hướng "neo theo điệp khúc lặp" hoặc "hard-cắt + resync".

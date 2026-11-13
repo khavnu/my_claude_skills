@@ -116,6 +116,17 @@ Lý do rule này tồn tại: `compileDebugKotlin` KHÔNG build test. Đã có l
 main xanh, unit test xanh, `androidTest` gãy và lọt nhiều ngày mới lộ ra lúc chạy device test.
 Chạy đủ source set tốn thêm vài giây, bỏ qua thì mất vài ngày.
 
+### Release Build Verification
+
+**Debug build nói dối về performance và về resource shrinking — hai thứ này chỉ đáng tin trên release build.**
+- **Jank/frame-time/recomposition**: đo trên release build (`assembleRelease`), không phải debug. Debug build thiếu R8 + baseline profile nên chậm hơn release vài lần — optimize dựa trên số đo từ debug build là optimize nhầm vấn đề ảo.
+- **Baseline Profile**: app Compose mới → thêm module `baselineprofile` (`BaselineProfileRule`: startup + màn chính + fling list) trước bản release đầu tiên, không đợi tới khi có complaint jank. Thiếu nó thì release chỉ có profile của library, code app vẫn JIT ở lần chạy đầu. Profile chỉ áp cho release (debug không đóng gói `baseline.prof`).
+- **Đo jank/startup trên APK cài ngoài Play** → chạy `adb shell cmd package compile -m speed-profile -f <pkg>` trước khi đo; không thì profile chưa được áp, số đo sai y như debug build.
+- **R8 resource shrinking** (`isShrinkResources = true`): chỉ strip resource trong release, debug không strip nên không bao giờ lộ ở dev. Resource truy cập qua string (`getIdentifier(name, type)`, `android.resource://<pkg>/<id>` URI) có thể bị xoá âm thầm dù reference ở compile-time "đúng". Resource dạng này → thêm vào `keep.xml` (`tools:keep`), verify bằng cách grep `resources.txt` trong `build/outputs/mapping/release/` phải ghi "reachable from keep xml file", không phải "is not reachable".
+- **R8 class merging** (horizontal/vertical, luôn bật ở release kể cả khi không bật resource shrinking): có thể gộp một class chứa field kiểu chỉ tồn tại từ API cao hơn `minSdk` (field gate bằng `@RequiresApi`/`Build.VERSION.SDK_INT`) vào một class không liên quan. Field vẫn giữ nguyên kiểu đó sau khi gộp → `NoClassDefFoundError` khi class gộp được load trên thiết bị dưới API đó, dù code chỉ chạm field ở đúng nhánh version-check. Release-only (debug không merge), và nếu Timber chỉ planted ở debug thì release crash không log gì — thư viện nào gate API bằng version check (Media3, CameraX, bất kỳ lib wrap `@RequiresApi`) đều có nguy cơ này, không riêng gì 1 lib. Fix: `-keep,allowobfuscation,allowshrinking class <package>.**` cho đúng package đó — pin riêng từng class không đủ, merge sẽ nhảy sang class khác trong cùng package. Verify trong `build/outputs/mapping/release/mapping.txt`: mọi class trong package đó phải có dòng `package.Class ->` riêng, không bị gộp chung dòng với class khác; rồi chạy lại trên thiết bị/emulator ở đúng API thấp nhất mà app hỗ trợ.
+
+Lý do rule này tồn tại: cùng tuần, hai project độc lập hit đúng loại lỗi này — một project tốn 3 vòng optimize vì đo jank trên debug build (release thực ra nhanh hơn nhiều), một project bị QA báo thiếu tài nguyên (âm thanh) ở bản release vì R8 strip mà debug không lộ ra.
+
 ---
 
 ## Workflow Rules
@@ -126,10 +137,25 @@ Chạy đủ source set tốn thêm vài giây, bỏ qua thì mất vài ngày.
 4. **Auto-update CLAUDE.md** — Apply rule changes directly.
 5. **Auto-update skills/memory** — Proactively save new patterns/pitfalls discovered during work.
 6. **NEVER auto-commit or auto-push** — Only run `git commit`/`git push` when user explicitly asks. Subagents must include "DO NOT run git commit or git push" in their prompts.
-   - **Ngoại lệ duy nhất — `/collab` ACTIVE**: từ lúc user báo "bắt đầu" tới lúc báo "dừng", flag `~/.claude/collab-active` tồn tại → được commit + push (không force). Chỉ user bật/tắt flag, peer session không được.
+   - **Ngoại lệ 1 — `/collab` ACTIVE**: từ lúc user báo "bắt đầu" tới lúc báo "dừng", flag `~/.claude/collab-active` tồn tại → được commit + push (không force). Chỉ user bật/tắt flag, peer session không được.
+   - **Ngoại lệ 2 — chế độ tự động làm feature/màn hình mới**: chỉ khi user nói rõ "tự động làm" (hoặc tương đương) cho một feature → tự commit sau mỗi phase của rule 9, **không push**. Xem rule 9.
 7. **Shared ViewModel over FragmentResultListener** — Same-feature BottomSheet/Dialog: use `activityViewModels()`.
 8. **safeShowDialogFragmentOrNot over raw .show()** — Always use `safeShowDialogFragmentOrNot(dialog, TAG)` from an Activity.
 9. **Incremental delivery — step by step, report back** — Cho mọi feature/màn hình mới: chia nhỏ thành các bước rõ ràng, hoàn thành từng bước rồi báo lại user trước khi làm tiếp. Không làm dồn tất cả một lúc. Với màn hình mới: bước 1 = UI shell với fake/empty data, bước 2 = wire data thật.
+   - **Thứ tự cho màn hình/feature mới** (cũng là thứ tự task trong plan): đi từ ngoài vào trong. Lớp nào user nhìn thấy làm trước, data làm sau:
+     1. Navigation: entry point → mở màn trống (Route + NavKey).
+     2. UI + `@Preview` với fake data.
+     3. ViewModel + UiState: chỉ state UI, chưa gọi repository.
+     4. Business logic: repository / data source / fake repo.
+
+     Đây là khung mặc định, không phải khuôn cứng: tự quyết chia nhỏ hay gộp bước theo độ lớn của feature. Ví dụ màn nhỏ có thể gộp 1+2; repository nặng có thể tách data source và repository thành 2 bước. Hai thứ không đổi: data không đứng trước UI; refactor đụng màn cũ là bước riêng, đặt trước bước dùng nó.
+   - **Chế độ "tự động làm"** (user yêu cầu rõ): chạy hết các phase không dừng, chỉ dừng khi lỗi hoặc không chắc (rule 10). Mỗi phase xong thì commit một lần:
+     - Mỗi commit là **một bước trọn nghĩa**: tự build được, review được riêng, revert riêng không kéo theo bước khác. Người không theo dõi session đọc `git log` của feature phải hiểu được màn hình được dựng lên thế nào. Ranh giới commit do mình quyết theo tiêu chí này, không theo số phase.
+     - Message `<Feature>: <Verb> <thing>`, động từ cụ thể (`Add`, `Bind`, `Extract`, `Wire`…). Ví dụ (Compress video): `CompressVideo: Add CompressVideoRoute` → `CompressVideo: Add CompressVideoScreen UI` → `CompressVideo: Bind CompressVideoViewModel` → `CompressVideo: Bind VideoProcessingRepository`. Refactor dùng chung: `Shared: Extract <X>`.
+     - **Không** thêm dòng `Co-Authored-By`.
+     - Điều kiện commit: build đủ mọi source set xanh, test liên quan pass, bước cần verify trên máy đã verify. Thiếu điều kiện thì không commit, dừng lại báo.
+     - Chỉ `git add` đúng file của bước. Không push, không amend, không `git clean`.
+     - Không ở chế độ này thì giữ nguyên rule 6: không tự commit, dừng báo sau mỗi phase.
    - **Ngoại lệ — feature lớn/dài** (nhiều session, xử lí nặng, có yêu cầu hiệu suất/RAM/thời gian): dùng skill `long-feature` — checklist cơ bản + nâng cao lưu trong repo, user duyệt checklist xong thì Claude **tự chủ** thực hiện và tự verify, chỉ dừng ở các checkpoint của skill. Claude tự đề xuất khi thấy dấu hiệu, hoặc user yêu cầu.
 10. **Ask immediately when uncertain** — Nghi ngờ về 1 chi tiết (design/layout/behavior/số liệu) mà không tự verify được (không render được UI, dữ liệu nguồn mơ hồ/thiếu, nhiều cách hiểu khả dĩ) → dừng lại hỏi ngay, không đoán rồi tiến hành code. Coi sự không chắc chắn là tín hiệu dừng, không chỉ khi yêu cầu thực sự mơ hồ.
 11. **Retro cuối mỗi ticket** — Xong một ticket, tự hỏi đúng một câu: *"có gì hôm nay tốn thời gian mà session sau sẽ tốn lại y hệt không?"* Có thì ghi memory, không thì thôi. Tiêu chí là **tốn thời gian**, không phải **thú vị**.
@@ -138,6 +164,8 @@ Chạy đủ source set tốn thêm vài giây, bỏ qua thì mất vài ngày.
     - **Chỉ ghi cái đã verify, kèm cách verify** — trỏ thẳng `file:line` hoặc lệnh đã chạy, để lần sau kiểm lại trong 10 giây thay vì phải tin.
     - **Không nhân bản cái repo đã ghi** — code structure, git history, `.claude/rules/*` thì đọc thẳng nguồn.
     - **Sửa và xoá khi phát hiện sai** — memory sai sống dai y như memory đúng, và nó đến dưới dạng *context* nên đứng TRÊN phán đoán tươi. Thấy memory mâu thuẫn với rule/code hiện tại → sửa ngay, ghi rõ ngày và sửa từ cái gì. Đây là phần "học" thật và là phần luôn bị bỏ qua.
+
+12. **Ảnh chụp lưu ngoài repo** — screenshot/capture (device, Figma render, before/after) lưu ở `/home/khapv/Tmp/claude/<project>/<feature>/`, tự tạo folder theo project. Không ghi ảnh vào repo, không sửa `.gitignore` vì ảnh.
 
 ---
 
@@ -312,6 +340,7 @@ Never declare UiState/Event above the ViewModel class.
 **Rules:**
 - `remember` = UI-only state | ViewModel = business state
 - Modifier order: `size → clip → background → padding → interaction`
+- **Scroll trước modifier thu hẹp/căn giữa width** (vd một wrapper "readable width" bọc nội dung vào cột giữa màn hình): `.verticalScroll(state)` phải đứng TRƯỚC modifier đó trong chain, không phải sau — modifier thu hẹp width đặt nội dung vào một `Box`/layout con hẹp hơn, nên scroll đặt sau nó chỉ cột giữa đó nhận gesture, hai lề trống không nhận swipe dù nội dung cần cuộn để lộ hết. Compose UI test (`performTouchInput` swipe, hoặc assert `hasScrollAction`) PASS cả trên code lỗi — chỉ lộ khi verify trên device/uiautomator (`scrollable="true"` bounds).
 - testTag format: `"{Feature}_{Component}"` cho non-text nodes
 - Reuse shared `LoadingView`, `EmptyView`, `ErrorView` thay vì tự tạo
 
@@ -369,6 +398,18 @@ Khi nhận yêu cầu viết plan, tự chọn skill phù hợp — không hỏi
 
 **Announce format:** *"Using `[skill]` vì [lý do 1 câu]"* — sau đó thực thi luôn.
 
+## Plan Self-Review
+
+Viết plan xong (`writing-plans`/`openspec-propose`), tự chạy checklist này bằng con mắt mới trước khi đưa user duyệt — tự làm, không dispatch subagent:
+
+1. **Spec coverage** — mỗi phần của spec/yêu cầu gốc có task nào cover không? Thiếu thì ghi ra.
+2. **Step scan** — mỗi step cho implementer viết đúng MỘT quyết định hợp lý: step không quyết định gì (câu vô nghĩa) hoặc step chép sẵn toàn bộ function body (trong khi signature + test đã đủ xác định) đều là lỗi.
+3. **Type consistency** — tên hàm/method signature/property dùng ở task sau có khớp task trước không? VD: `clearLayers()` ở Task 3 nhưng `clearFullLayers()` ở Task 7 → bug.
+4. **Review Focus** — mỗi input class/failure mode spec ngụ ý có task nào mà test chạm tới không? 5 cái dễ gây lỗi nhất mà chưa có test → thêm vào Review Focus; phần rỗng nghĩa là đã check và không thấy, không phải bỏ qua.
+5. **Proportion** — plan dài gấp nhiều lần spec → đang chép code chứ không phải viết plan. Thay code block bằng signature + tên test + assertion.
+
+Thấy lỗi thì sửa luôn trong plan, không cần re-review lại.
+
 ## Execution Mode Selection
 
 Chọn cách chạy việc (khác với chọn skill viết plan ở trên):
@@ -423,6 +464,14 @@ Cuối session, backup tự động (không hỏi):
 ```bash
 rsync -av --delete ~/.claude/CLAUDE.md /home/khapv/Claude_Usage/my_claude_skills/CLAUDE.md
 rsync -av --delete ~/.claude/settings.json /home/khapv/Claude_Usage/my_claude_skills/settings.json
-rsync -av --delete ~/.claude/skills/ /home/khapv/Claude_Usage/my_claude_skills/skills/
+rsync -av --delete --exclude="synced/" ~/.claude/skills/ /home/khapv/Claude_Usage/my_claude_skills/skills/
 rsync -av --delete --exclude="*token*" --exclude="*secret*" --exclude="*key*" --exclude="*credential*" --exclude="*password*" ~/.claude/projects/*/memory/ /home/khapv/Claude_Usage/my_claude_skills/memory/
 ```
+
+## Self-Upgrade Automation
+
+Hai cơ chế rà soát + nâng cấp `CLAUDE.md`/skill, dùng chung log `~/.claude/skill-research-log.md`:
+- **Cron tự động** — Thứ 6 17h00 (Asia/Bangkok), `~/.claude/scripts/weekly-skill-research.sh`. Headless, `--dangerously-skip-permissions` (bắt buộc — headless mặc định chặn mọi write dưới `~/.claude/`, kể cả file không nhạy cảm), vì vậy **không có WebSearch/WebFetch** (tránh prompt injection từ nội dung ngoài). Tối đa 1 file/lần, rất bảo thủ.
+- **Skill thủ công** `/self-upgrade` — gọi bất cứ lúc nào, chạy trong session tương tác (quyền ghi bình thường), được phép WebSearch vì có người theo dõi.
+
+Máy này có **2 account profile** cần giữ đồng bộ: `~/.claude` và `~/.claude-k`. Mọi file bị patch (CLAUDE.md hoặc skill) phải mirror sang `~/.claude-k` ngay sau khi sửa — cả 2 cơ chế trên đều tự làm bước này.

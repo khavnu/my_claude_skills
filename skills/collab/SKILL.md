@@ -1,7 +1,6 @@
 ---
 name: collab
 description: Use when the user runs /collab with the paths of two or more related projects (e.g. a library and the product that consumes it) so their agent sessions — Claude by default, or another Claude account / AI CLI such as Codex via --pool — exchange handoffs, requests, bug reports and questions as peer developers.
-disable-model-invocation: true
 argument-hint: <project-path> <project-path> [more paths] [--pool claudeK,codex]
 ---
 

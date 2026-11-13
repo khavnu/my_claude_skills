@@ -22,7 +22,13 @@ lần chạy liên tiếp **trong khi giá trị tuyệt đối đứng yên ~3,
 6,69s khi máy ấm lên, mẫu số co lại. Luôn đọc cả giá trị tuyệt đối trước khi kết luận cái gì đang
 xấu đi.
 
+Thứ tự cố định cũng là một nhiễu: 2026-10-19 (refactor `:lyrics:pipeline`, Pixel 9) loạt A/B luôn chạy bản cũ
+trước → phần đuôi bản mới chậm hơn 5–8 s, trông như regression. Chạy lại 3 vòng **đảo thứ tự (mới trước)**, ghi nhiệt
+đầu lượt: chênh còn +1,7% (trung vị lời cuối). Code ở đoạn đó không đổi gì. `ab_pipeline.sh` có `ORDER="after before"`
+và cột `startTemp` cho việc này (`lyrics-corpus/tools/device/`).
+
 **How to apply:** trước khi so hai build, kiểm tra dòng đối chứng lệch bao nhiêu. Lệch >5% → vứt
-phép đo, cài lại và đo nối tiếp. Số "trước" lấy từ phiên khác chỉ dùng để ước lượng, không dùng để
+phép đo, cài lại và đo nối tiếp. Thấy một build chậm hơn khi thứ tự chạy cố định → đảo thứ tự đo lại TRƯỚC khi đi tìm
+nguyên nhân trong code. Số "trước" lấy từ phiên khác chỉ dùng để ước lượng, không dùng để
 kết luận. Liên quan: [[project-stream-chunk-10s]] (đo khi ĐANG PHÁT mới ra đúng điều kiện),
 [[project-fade-merge-export]] (verify audio phải kèm dòng đối chứng).

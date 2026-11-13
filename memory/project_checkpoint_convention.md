@@ -42,4 +42,10 @@ model với runtime. Model `.onnx`/`.ort` thì vẫn KHÔNG lấy (không khớp
 chốt của session có mặt không. Lưu ý `find -path '*build/*'` sẽ khớp nhầm `native_build/` — false
 positive, không phải rác.
 
+4. **2026-10-09 (lần 2): tự gõ lại lệnh rsync từ trí nhớ thay vì đọc file này** → ra 99 MB: kéo
+   `native_build/custom/tensorflow_src` (61 MB, do `*.txt/*.json` + `*/`), `native_build/custom/libs/*.aar` (TF Lite, 21 MB,
+   do `--include='*.aar'` để lấy AAR ORT), `source_backup/`, `.claude/`. Đã xoá tay → 19 MB. Khi cần AAR ORT, KHÔNG include
+   `*.aar` toàn cục — copy riêng `onnx_runtime/custom/libs/*.aar` sau rsync. Mẫu top-level đúng: xem `ls -A` của
+   checkpoint `code_backup_2026-10-09_100506_lyrics_K7_batchC_dolphin_ar_nl`.
+
 Nên kèm `CHECKPOINT.md` trong thư mục: nó chứa gì, KHÔNG chứa gì, và trạng thái then chốt lúc đó.

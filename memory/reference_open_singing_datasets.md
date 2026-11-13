@@ -25,3 +25,10 @@ needed: Jamendo API `lang` filter + lyrics (needs a client_id the user must crea
 CC-NC approved by the user 2026-10-07. Vocadito / SingStyle111 have none of our languages.
 Commons API rate-limits bursts (429) — `sung/commons.py` backs off. Whisper is NOT a singing detector for old/choir
 recordings. Related: [[project-lyrics-device-run-recipe]].
+
+2026-10-09 additions:
+- **fr, es with hand-annotated line times** — JamendoLyrics fr (19) / es (20) now built (`sung/build_jl_fr_es.py`, Spleeter
+  vocals) → the timing reference for NeMo (report column alignBiasMs). I re-hit the symlink trap above by not reading this
+  file first: download from `subsets/<lang>/mp3/`. Also `find -size -1k` keeps 50-byte files (rounds up) — use `-size -2k`.
+- **GTSinger zh/ko/es/fr/it** built (`sung/build_gt_more.py`): fr = high soprano, it = opera arias → NeMo reads ~nothing;
+  zh/ko annotated per SYLLABLE; different singers share songs (dedupe by name, and ko still has one pair under two titles).

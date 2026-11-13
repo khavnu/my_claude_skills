@@ -9,6 +9,18 @@ Never guess. Never patch symptoms. Always find the root cause.
 
 ---
 
+# Hypothesis Discipline
+
+One hypothesis at a time:
+1. State it explicitly — "I believe X causes Y because Z."
+2. Change ONE thing that tests it.
+3. Verify. Don't stack a second fix on top of an unverified first one.
+4. Fix failed? Discard the hypothesis, form a new one — don't patch the same guess again.
+
+**3 failed fixes → stop, suspect architecture.** If 3 independent hypotheses all fail, the bug isn't in the code being touched — it's a structural assumption (wrong layer owns the state, wrong lifecycle scope, wrong abstraction). Stop patching; re-derive the problem from Step 1 with that assumption in question, or report to the user what's been ruled out and ask before continuing.
+
+---
+
 # Step 1: Classify the problem
 
 | Symptom | Category |

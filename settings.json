@@ -1,5 +1,4 @@
 {
-  "model": "opus[1m]",
   "hooks": {
     "Stop": [
       {
@@ -66,6 +65,10 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": false,
     "superpowers@superpowers-marketplace": true,
@@ -86,9 +89,5 @@
   "tui": "default",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
-  "remoteControlAtStartup": false,
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/statusline.sh"
-  }
+  "remoteControlAtStartup": false
 }

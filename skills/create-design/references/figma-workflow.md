@@ -26,6 +26,7 @@ file structure and the traps that cost real retries.
 |---|---|---|
 | Bound fill renders black on an instance sublayer | Base paint color was `{0,0,0}`; render uses it | Build the base paint from `Object.values(v.valuesByMode)[0]`, then bind |
 | Paint opacity silently 1 | `setBoundVariableForPaint` dropped `opacity` even when it was in the base paint (2026-10-01, scrim/dim layers) | Use node `opacity` for translucent bound fills; verify by reading `fills[0].opacity` back |
+| Translucent variant of a bound color renders solid (white@40% → solid white) | A paint bound to a color variable keeps that variable's own alpha; opacity set on top of the binding (paint- or node-level) is overridden by it | Don't bind the variable for a one-off translucent value — use an unbound `{type:'SOLID', color, opacity}` paint instead |
 | Text shows an empty box | Plus Jakarta Sans has no ⇄ ⏱ (and most emoji: ♥ renders as a red emoji) | Write words or use an Icon component; scan new copy with `/[⇄⏱]/` before shipping |
 | Edited the wrong note/pill | `section.findOne(n=>n.name==='superseded note')` returns the first match, not the one above your frame | Pick by geometry (same x, directly above) or keep the created id |
 | Frames left their Section after a multi-frame screenshot | `figma.group(nodes, page)` → `ungroup` reparents the frames to the group's parent (the page) | Group inside the frames' own section (`figma.group(nodes, section)`), or screenshot each frame; after any group/ungroup, list page-level frames and move them back |
@@ -54,6 +55,11 @@ file structure and the traps that cost real retries.
 | New vector/wave shape has a black outline | `figma.createVector()` comes with a default 1 px black stroke | Set `v.strokes=[]` right after creating |
 | Android template icons (white bitmaps tinted in code) invisible on white | The PNG is white; Compose tints it | Frame 20×20 → icon instance `isMask=true` → rectangle bound to the colour token above it |
 | Screenshot URL returns a 74-byte 404 JSON | `get_screenshot` URLs had expired by the time curl ran (2026-10-01) | Download right after the call, or judge from `node.screenshot()` inline |
+| Children lose FILL/HUG sizing after a layout axis switch | Switching `layoutMode` (VERTICAL↔HORIZONTAL) silently turns children's sizing to FIXED at the old cross size | Re-set `layoutSizingHorizontal`/`layoutSizingVertical` on the frame and every child right after any `layoutMode` switch |
+| `node.findAncestor is not a function` | `findAncestor` doesn't exist in use_figma | Walk `parent` by hand |
+| Wrap grid children overflow or refuse to resize | `layoutWrap='WRAP'` frames reject FILL children | Set a FIXED cell width = (width − padding − gap·(cols−1)) / cols |
+| `layoutPositioning='ABSOLUTE'` throws | Only valid when the parent itself is auto-layout (`layoutMode !== 'NONE'`) | Use plain x/y on non-auto-layout parents instead |
+| Instance's leftover default icon/child won't go away | Component instance structural children refuse `.remove()` | Set `.visible = false` instead |
 
 ## Realistic images (covers, avatars, photos)
 - Generate your own abstract images (PIL) instead of copyrighted art; vary hue
