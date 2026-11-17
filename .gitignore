@@ -18,4 +18,5 @@ __pycache__/
 *.pyc
 
 # Company-internal doc engine notes (app code map, open bugs, third-party PDFs) — repo is public
-doc_reader/
+doc_reader/*
+!doc_reader/rebuild-plan.md
