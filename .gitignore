@@ -16,3 +16,6 @@ skills/tohsoft-ticket/
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Company-internal doc engine notes (app code map, open bugs, third-party PDFs) — repo is public
+doc_reader/
